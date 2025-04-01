@@ -1,54 +1,54 @@
 # Fibi Budget
 
-Aplikacja do zarządzania budżetem osobistym, napisana w React z TypeScript.
+A personal budget management application built with React and TypeScript.
 
-## Funkcje
+## Features
 
-- Śledzenie przychodów i wydatków
-- Zarządzanie kategoriami wydatków
-- Przegląd miesięczny
-- Raporty finansowe
-- Automatyczne zapisywanie danych w przeglądarce
-- Interaktywna edycja transakcji
+- Track income and expenses
+- Manage expense categories
+- Monthly overview
+- Financial reports
+- Automatic data saving in browser
+- Interactive transaction editing
 
-## Wymagania
+## Requirements
 
-- Node.js (wersja 16 lub nowsza)
-- npm lub yarn
+- Node.js (version 16 or higher)
+- npm or yarn
 
-## Instalacja
+## Installation
 
-1. Sklonuj repozytorium:
+1. Clone the repository:
 ```bash
-git clone https://github.com/twoj-username/fibi-budget.git
+git clone https://github.com/lukaszkoziorowski/fibi-budget.git
 cd fibi-budget
 ```
 
-2. Zainstaluj zależności:
+2. Install dependencies:
 ```bash
 npm install
-# lub
+# or
 yarn install
 ```
 
-3. Uruchom aplikację w trybie deweloperskim:
+3. Run the app in development mode:
 ```bash
 npm run dev
-# lub
+# or
 yarn dev
 ```
 
-4. Otwórz [http://localhost:5173](http://localhost:5173) w przeglądarce.
+4. Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-## Budowanie dla produkcji
+## Building for Production
 
 ```bash
 npm run build
-# lub
+# or
 yarn build
 ```
 
-## Technologie
+## Technologies
 
 - React
 - TypeScript
@@ -57,6 +57,6 @@ yarn build
 - date-fns
 - Headless UI
 
-## Licencja
+## License
 
 MIT
