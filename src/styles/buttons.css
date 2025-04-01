@@ -1,0 +1,21 @@
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-button transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary text-content-inverted hover:bg-primary/90 focus:ring-primary;
+  }
+
+  .btn-secondary {
+    @apply btn bg-secondary text-content-primary hover:bg-secondary/80 focus:ring-secondary;
+  }
+
+  .btn-ghost {
+    @apply btn text-content-primary hover:bg-background focus:ring-content-primary;
+  }
+
+  .btn-danger {
+    @apply btn text-red-600 hover:bg-red-50 focus:ring-red-500;
+  }
+} 
