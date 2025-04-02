@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../config/firebase';
@@ -15,15 +15,11 @@ import {
   ChevronDownIcon,
   WrenchIcon,
   UserGroupIcon,
-  FlagIcon,
   UserIcon,
-  UsersIcon,
   ArrowsRightLeftIcon as ConnectionsIcon,
-  AcademicCapIcon,
-  CommandLineIcon,
-  ArrowDownTrayIcon,
   ArrowRightOnRectangleIcon,
-  DocumentTextIcon
+  Bars3Icon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import BudgetSettingsModal from './BudgetSettingsModal';
@@ -38,9 +34,18 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { currentUser } = useAuth();
-  const globalCurrency = useSelector((state: RootState) => state.budget.globalCurrency);
-  const [isUserMenuExpanded, setIsUserMenuExpanded] = useState(false);
   const [isBudgetSettingsOpen, setIsBudgetSettingsOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -71,186 +76,256 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
   const settingsItems = [
     { name: 'Budget Settings', icon: WrenchIcon, path: '/settings/budget' },
     { name: 'Manage Payees', icon: UserGroupIcon, path: '/settings/payees' },
-    { name: 'Edit Flags', icon: FlagIcon, path: '/settings/flags' },
   ];
 
   const accountItems = [
     { name: 'Account Settings', icon: UserIcon, path: '/account/settings' },
-    { name: 'YNAB Together', icon: UsersIcon, path: '/account/ynab-together' },
     { name: 'Manage Connections', icon: ConnectionsIcon, path: '/account/connections' },
-    { name: 'Join a Workshop', icon: AcademicCapIcon, path: '/account/workshop' },
-    { name: 'Keyboard Shortcuts', icon: CommandLineIcon, path: '/account/shortcuts' },
-    { name: 'Migrate From', icon: ArrowDownTrayIcon, path: '/account/migrate' },
-  ];
-
-  const legalItems = [
-    { name: 'Privacy Policy', icon: DocumentTextIcon, path: '/legal/privacy' },
   ];
 
   const handleSettingsClick = (path: string) => {
     if (path === '/settings/budget') {
       setIsBudgetSettingsOpen(true);
-      setIsUserMenuExpanded(false);
+      setIsMobileMenuOpen(false);
     } else {
       navigate(path);
     }
   };
 
-  const handleCurrencyChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    dispatch(setGlobalCurrency(event.target.value));
-  };
-
-  return (
+  const renderMobileNavigation = () => (
     <>
-      <nav className={`fixed left-0 top-0 h-screen bg-surface shadow-lg transition-all duration-300 ${
-        isCollapsed ? 'w-16' : 'w-64'
-      }`}>
-        <div className="flex flex-col h-full">
-          {/* Logo and User Info */}
-          <div className="px-4 py-4 border-b border-secondary">
-            <div className={`flex flex-col ${isCollapsed ? 'items-center' : 'items-start'}`}>
-              {/* Logo */}
-              <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start'} mb-4`}>
-                {isCollapsed ? (
-                  <span className="text-2xl font-bold text-primary">F</span>
-                ) : (
-                  <div className="flex items-center">
-                    <span className="text-2xl font-bold text-primary">FiBi</span>
-                  </div>
-                )}
-              </div>
-
-              {/* User Info */}
-              {!isCollapsed && (
-                <div className="w-full">
-                  <button
-                    onClick={() => setIsUserMenuExpanded(!isUserMenuExpanded)}
-                    className="flex items-center gap-3 w-full hover:bg-background rounded-md p-2 transition-colors"
-                  >
-                    {currentUser?.photoURL ? (
-                      <img
-                        src={currentUser.photoURL}
-                        alt="Profile"
-                        className="w-8 h-8 rounded-full"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-lg font-semibold">
-                        {currentUser?.email?.[0].toUpperCase() || 'U'}
-                      </div>
-                    )}
-                    <div className="flex flex-1 items-center justify-between">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold text-content-primary text-left">{getUserDisplayName()}</span>
-                        {currentUser?.email && (
-                          <span className="text-xs text-content-secondary">{currentUser.email}</span>
-                        )}
-                      </div>
-                      <ChevronDownIcon className={`w-5 h-5 transition-transform ${isUserMenuExpanded ? 'rotate-180' : ''}`} />
-                    </div>
-                  </button>
-
-                  {/* Expandable Menu */}
-                  {isUserMenuExpanded && (
-                    <div className="mt-2 space-y-4">
-                      {/* Settings Section */}
-                      <div>
-                        {settingsItems.map((item) => (
-                          <button
-                            key={item.path}
-                            onClick={() => handleSettingsClick(item.path)}
-                            className="flex items-center px-2 py-2 text-sm text-content-secondary hover:bg-background rounded-md w-full"
-                          >
-                            <item.icon className="w-5 h-5 mr-3" />
-                            {item.name}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Account Section */}
-                      <div className="border-t border-secondary pt-4">
-                        <div className="px-2 mb-2 text-xs font-semibold text-content-secondary uppercase">Account</div>
-                        {accountItems.map((item) => (
-                          <Link
-                            key={item.path}
-                            to={item.path}
-                            className="flex items-center px-2 py-2 text-sm text-content-secondary hover:bg-background rounded-md"
-                          >
-                            <item.icon className="w-5 h-5 mr-3" />
-                            {item.name}
-                          </Link>
-                        ))}
-                        <button
-                          onClick={handleLogout}
-                          className="flex items-center w-full px-2 py-2 text-sm text-content-secondary hover:bg-background rounded-md"
-                        >
-                          <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3" />
-                          Log Out
-                        </button>
-                      </div>
-
-                      {/* Legal Section */}
-                      <div className="border-t border-secondary pt-4">
-                        <div className="px-2 mb-2 text-xs font-semibold text-content-secondary uppercase">Legal</div>
-                        {legalItems.map((item) => (
-                          <Link
-                            key={item.path}
-                            to={item.path}
-                            className="flex items-center px-2 py-2 text-sm text-content-secondary hover:bg-background rounded-md"
-                          >
-                            <item.icon className="w-5 h-5 mr-3" />
-                            {item.name}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Navigation Links */}
-          <div className="flex-1 py-4">
-            {navigationItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center px-4 py-3 mb-1 transition-colors ${
-                    isActive(item.path)
-                      ? 'bg-secondary text-primary border-r-4 border-primary'
-                      : 'text-content-secondary hover:bg-background'
-                  }`}
-                >
-                  <Icon className="w-6 h-6 shrink-0" />
-                  {!isCollapsed && (
-                    <span className="ml-3 text-sm font-medium">{item.name}</span>
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Collapse Button */}
-          <div className="px-4 py-4 border-t border-secondary">
-            <button
-              onClick={() => onCollapsedChange(!isCollapsed)}
-              className="flex items-center justify-center w-full p-2 text-content-secondary bg-background hover:bg-secondary rounded-md transition-colors"
-            >
-              {isCollapsed ? (
-                <ChevronRightIcon className="w-6 h-6" />
-              ) : (
-                <>
-                  <ChevronLeftIcon className="w-6 h-6" />
-                  <span className="ml-2 text-sm font-medium">Collapse menu</span>
-                </>
-              )}
-            </button>
-          </div>
+      {/* Mobile Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden">
+        <div className="flex justify-around items-center h-16">
+          {navigationItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center justify-center w-full h-full ${
+                  isActive(item.path)
+                    ? 'text-primary'
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <Icon className="w-6 h-6" />
+                <span className="text-xs mt-1">{item.name}</span>
+              </Link>
+            );
+          })}
         </div>
       </nav>
 
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="fixed top-4 right-4 z-50 p-2 rounded-md text-gray-500 hover:text-gray-700 md:hidden"
+      >
+        {isMobileMenuOpen ? (
+          <XMarkIcon className="w-6 h-6" />
+        ) : (
+          <Bars3Icon className="w-6 h-6" />
+        )}
+      </button>
+
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" onClick={() => setIsMobileMenuOpen(false)} />
+      )}
+
+      {/* Mobile Menu Content */}
+      <div
+        className={`fixed inset-y-0 right-0 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out z-50 md:hidden ${
+          isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold">{getUserDisplayName()}</h2>
+            <button
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="p-2 rounded-md text-gray-500 hover:text-gray-700"
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">Settings</h3>
+              <div className="space-y-1">
+                {settingsItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.path}
+                      onClick={() => handleSettingsClick(item.path)}
+                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      <Icon className="w-5 h-5 mr-3" />
+                      {item.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 mb-2">Account</h3>
+              <div className="space-y-1">
+                {accountItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.path}
+                      onClick={() => {
+                        navigate(item.path);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+                    >
+                      <Icon className="w-5 h-5 mr-3" />
+                      {item.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <button
+              onClick={handleLogout}
+              className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
+            >
+              <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3" />
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  const renderDesktopNavigation = () => (
+    <nav
+      className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 transition-all duration-300 overflow-y-auto ${
+        isCollapsed ? 'w-16' : 'w-64'
+      }`}
+    >
+      <div className="flex flex-col h-full">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          {!isCollapsed && (
+            <h2 className="text-lg font-semibold truncate">{getUserDisplayName()}</h2>
+          )}
+          <button
+            onClick={() => onCollapsedChange(!isCollapsed)}
+            className="p-2 rounded-md text-gray-500 hover:text-gray-700"
+          >
+            {isCollapsed ? (
+              <ChevronRightIcon className="w-8 h-8" />
+            ) : (
+              <ChevronLeftIcon className="w-8 h-8" />
+            )}
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-2">
+            <div className="space-y-1">
+              <div>
+                <div className="space-y-1">
+                  {navigationItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`flex items-center justify-center md:justify-start h-10 px-2 text-sm rounded-md ${
+                          isActive(item.path)
+                            ? 'bg-primary text-white'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <div className="w-10 h-10 flex items-center justify-center">
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        {!isCollapsed && <span className="ml-2">{item.name}</span>}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className="space-y-1">
+                  {settingsItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.path}
+                        onClick={() => handleSettingsClick(item.path)}
+                        className={`flex items-center justify-center md:justify-start w-full h-10 px-2 text-sm rounded-md ${
+                          isActive(item.path)
+                            ? 'bg-primary text-white'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <div className="w-10 h-10 flex items-center justify-center">
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        {!isCollapsed && <span className="ml-2">{item.name}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className="space-y-1">
+                  {accountItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <button
+                        key={item.path}
+                        onClick={() => navigate(item.path)}
+                        className={`flex items-center justify-center md:justify-start w-full h-10 px-2 text-sm rounded-md ${
+                          isActive(item.path)
+                            ? 'bg-primary text-white'
+                            : 'text-gray-700 hover:bg-gray-100'
+                        }`}
+                      >
+                        <div className="w-10 h-10 flex items-center justify-center">
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        {!isCollapsed && <span className="ml-2">{item.name}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-2 border-t border-gray-200">
+          <button
+            onClick={handleLogout}
+            className="flex items-center justify-center md:justify-start w-full h-10 px-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
+          >
+            <div className="w-10 h-10 flex items-center justify-center">
+              <ArrowRightOnRectangleIcon className="w-5 h-5" />
+            </div>
+            {!isCollapsed && <span className="ml-2">Logout</span>}
+          </button>
+        </div>
+      </div>
+    </nav>
+  );
+
+  return (
+    <>
+      {isMobile ? renderMobileNavigation() : renderDesktopNavigation()}
       <BudgetSettingsModal
         isOpen={isBudgetSettingsOpen}
         onClose={() => setIsBudgetSettingsOpen(false)}

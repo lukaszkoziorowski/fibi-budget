@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
@@ -43,6 +43,16 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
   const [isNavCollapsed, setIsNavCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <Provider store={store}>
@@ -72,20 +82,22 @@ function App() {
               path="/*"
               element={
                 <PrivateRoute>
-                  <div className="min-h-screen bg-background flex">
+                  <div className="min-h-screen bg-background">
                     <Navigation 
                       isCollapsed={isNavCollapsed} 
                       onCollapsedChange={setIsNavCollapsed} 
                     />
-                    <main className={`flex-1 transition-all duration-300 ${
-                      isNavCollapsed ? 'ml-16' : 'ml-64'
-                    }`}>
-                      <div className="max-w-[1000px] mx-auto py-6 px-4">
-                        <Routes>
-                          <Route path="/" element={<Dashboard />} />
-                          <Route path="/transactions" element={<Transactions />} />
-                          <Route path="/report" element={<Report />} />
-                        </Routes>
+                    <main className={`min-h-screen ${isMobile ? 'pb-20' : ''}`}>
+                      <div className={`mx-auto transition-all duration-300 ${
+                        !isMobile ? (isNavCollapsed ? 'pl-16' : 'pl-64') : ''
+                      }`}>
+                        <div className="max-w-[1000px] mx-auto px-4 py-6 md:py-8">
+                          <Routes>
+                            <Route path="/" element={<Dashboard />} />
+                            <Route path="/transactions" element={<Transactions />} />
+                            <Route path="/report" element={<Report />} />
+                          </Routes>
+                        </div>
                       </div>
                     </main>
                   </div>

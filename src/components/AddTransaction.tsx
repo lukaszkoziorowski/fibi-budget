@@ -5,7 +5,7 @@ import { addTransaction } from "@/store/budgetSlice";
 
 const AddTransaction = () => {
   const dispatch = useDispatch();
-  const { categories } = useSelector((state: RootState) => state.budget);
+  const { categories, globalCurrency } = useSelector((state: RootState) => state.budget);
   
   const [formData, setFormData] = useState({
     description: "",
@@ -19,8 +19,11 @@ const AddTransaction = () => {
     e.preventDefault();
     if (!formData.description || !formData.amount || !formData.categoryId) return;
 
+    // Generate a unique ID using timestamp and random string
+    const uniqueId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     dispatch(addTransaction({
-      id: Date.now().toString(),
+      id: uniqueId,
       description: formData.description,
       amount: formData.type === "income" 
         ? parseFloat(formData.amount)
@@ -28,6 +31,7 @@ const AddTransaction = () => {
       categoryId: formData.categoryId,
       type: formData.type,
       date: formData.date,
+      currency: globalCurrency,
     }));
 
     setFormData({
@@ -41,75 +45,89 @@ const AddTransaction = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex gap-4">
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700">Opis</label>
-          <input
-            type="text"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            required
-          />
-        </div>
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700">Kwota</label>
-          <input
-            type="number"
-            step="0.01"
-            value={formData.amount}
-            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            required
-          />
-        </div>
-      </div>
-
-      <div className="flex gap-4">
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700">Kategoria</label>
-          <select
-            value={formData.categoryId}
-            onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            required
-          >
-            <option value="">Wybierz kategorię</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex-1">
-          <label className="block text-sm font-medium text-gray-700">Typ</label>
-          <select
-            value={formData.type}
-            onChange={(e) => setFormData({ ...formData, type: e.target.value as "income" | "expense" })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-          >
-            <option value="expense">Wydatek</option>
-            <option value="income">Przychód</option>
-          </select>
-        </div>
+      <div>
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+          Description
+        </label>
+        <input
+          type="text"
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+          required
+        />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Data</label>
+        <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+          Amount
+        </label>
+        <input
+          type="number"
+          id="amount"
+          value={formData.amount}
+          onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+          step="0.01"
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+          Category
+        </label>
+        <select
+          id="category"
+          value={formData.categoryId}
+          onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+          required
+        >
+          <option value="">Select a category</option>
+          {categories.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor="type" className="block text-sm font-medium text-gray-700">
+          Type
+        </label>
+        <select
+          id="type"
+          value={formData.type}
+          onChange={(e) => setFormData({ ...formData, type: e.target.value as "income" | "expense" })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+        >
+          <option value="expense">Expense</option>
+          <option value="income">Income</option>
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+          Date
+        </label>
         <input
           type="date"
+          id="date"
           value={formData.date}
           onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary sm:text-sm"
+          required
         />
       </div>
 
       <button
         type="submit"
-        className="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
       >
-        Dodaj transakcję
+        Add Transaction
       </button>
     </form>
   );
