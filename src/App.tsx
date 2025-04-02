@@ -10,6 +10,7 @@ import Login from './components/Login';
 import SignUp from './components/SignUp';
 import AccountSettings from './components/AccountSettings';
 import AccountConnections from './components/AccountConnections';
+import Settings from './components/Settings';
 import LandingPage from './components/LandingPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './contexts/AuthContext';
@@ -50,8 +51,10 @@ const MainAppLayout = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const location = useLocation();
   
-  // Check if the current path is an account setting path
+  // Check if the current path is an account or settings page
   const isAccountPage = location.pathname.startsWith('/account/');
+  const isSettingsPage = location.pathname === '/settings';
+  const hideNavigation = isAccountPage || isSettingsPage;
   
   useEffect(() => {
     const handleResize = () => {
@@ -64,8 +67,8 @@ const MainAppLayout = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Only show navigation when not on account pages */}
-      {!isAccountPage && (
+      {/* Only show navigation when not on account or settings pages */}
+      {!hideNavigation && (
         <Navigation 
           isCollapsed={isNavCollapsed} 
           onCollapsedChange={setIsNavCollapsed} 
@@ -73,13 +76,14 @@ const MainAppLayout = () => {
       )}
       <main className={`min-h-screen ${isMobile ? 'pb-20' : ''}`}>
         <div className={`mx-auto transition-all duration-300 ${
-          !isAccountPage && !isMobile ? (isNavCollapsed ? 'pl-16' : 'pl-64') : ''
+          !hideNavigation && !isMobile ? (isNavCollapsed ? 'pl-16' : 'pl-64') : ''
         }`}>
           <div className="max-w-[1000px] mx-auto px-4 py-6 md:py-8">
             <Routes>
               <Route path="/" element={<Dashboard />} />
               <Route path="/transactions" element={<Transactions />} />
               <Route path="/report" element={<Report />} />
+              <Route path="/settings" element={<Settings />} />
               <Route path="/account/settings" element={<AccountSettings />} />
               <Route path="/account/connections" element={<AccountConnections />} />
             </Routes>

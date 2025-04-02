@@ -32,12 +32,17 @@ module.exports = {
         'float-diagonal': {
           '0%, 100%': { transform: 'translate(0, 0)' },
           '50%': { transform: 'translate(8px, -8px)' },
+        },
+        'blink': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0' },
         }
       },
       animation: {
         'float-slow': 'float-vertical 6s ease-in-out infinite',
         'float-medium': 'float-diagonal 4s ease-in-out infinite',
         'float-fast': 'float-horizontal 3s ease-in-out infinite',
+        'blink': 'blink 1s ease-in-out infinite',
       }
     },
   },

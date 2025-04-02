@@ -13,16 +13,12 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronDownIcon,
-  WrenchIcon,
-  UserGroupIcon,
-  UserIcon,
-  ArrowsRightLeftIcon as ConnectionsIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
-  XMarkIcon
+  XMarkIcon,
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
-import BudgetSettingsModal from './BudgetSettingsModal';
 
 interface NavigationProps {
   isCollapsed: boolean;
@@ -35,7 +31,6 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
   const dispatch = useDispatch();
   const { currentUser } = useAuth();
   const { budgetName } = useSelector((state: RootState) => state.budget);
-  const [isBudgetSettingsOpen, setIsBudgetSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -77,25 +72,6 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
     }
   };
 
-  const settingsItems = [
-    { name: 'Budget Settings', icon: WrenchIcon, path: '/settings/budget' },
-    { name: 'Manage Payees', icon: UserGroupIcon, path: '/settings/payees' },
-  ];
-
-  const accountItems = [
-    { name: 'Account Settings', icon: UserIcon, path: '/account/settings' },
-    { name: 'Manage Connections', icon: ConnectionsIcon, path: '/account/connections' },
-  ];
-
-  const handleSettingsClick = (path: string) => {
-    if (path === '/settings/budget') {
-      setIsBudgetSettingsOpen(true);
-      setIsMobileMenuOpen(false);
-    } else {
-      navigate(path);
-    }
-  };
-
   const renderMobileNavigation = () => (
     <>
       {/* Mobile Bottom Navigation */}
@@ -110,7 +86,7 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
                 className={`flex flex-col items-center justify-center w-full h-full ${
                   isActive(item.path)
                     ? 'text-primary'
-                    : 'text-gray-500 hover:text-gray-700'
+                    : 'text-gray-500 hover:text-gray-500'
                 }`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -157,50 +133,17 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
           </div>
 
           <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Settings</h3>
-              <div className="space-y-1">
-                {settingsItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.path}
-                      onClick={() => handleSettingsClick(item.path)}
-                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
-                    >
-                      <Icon className="w-5 h-5 mr-3" />
-                      {item.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-medium text-gray-500 mb-2">Account</h3>
-              <div className="space-y-1">
-                {accountItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.path}
-                      onClick={() => {
-                        navigate(item.path);
-                        setIsMobileMenuOpen(false);
-                      }}
-                      className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
-                    >
-                      <Icon className="w-5 h-5 mr-3" />
-                      {item.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+            <button
+              onClick={() => navigate('/settings')}
+              className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+            >
+              <Cog6ToothIcon className="w-5 h-5 mr-3" />
+              Settings
+            </button>
 
             <button
               onClick={handleLogout}
-              className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
+              className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md mt-2"
             >
               <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3" />
               Logout
@@ -247,8 +190,8 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
                         to={item.path}
                         className={`flex items-center justify-center md:justify-start h-10 px-2 text-sm rounded-md ${
                           isActive(item.path)
-                            ? 'bg-primary text-white'
-                            : 'text-gray-700 hover:bg-gray-100'
+                            ? 'bg-primary text-white hover:text-white'
+                            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-700'
                         }`}
                       >
                         <div className="w-10 h-10 flex items-center justify-center">
@@ -260,59 +203,20 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
                   })}
                 </div>
               </div>
-
-              <div>
-                <div className="space-y-1">
-                  {settingsItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <button
-                        key={item.path}
-                        onClick={() => handleSettingsClick(item.path)}
-                        className={`flex items-center justify-center md:justify-start w-full h-10 px-2 text-sm rounded-md ${
-                          isActive(item.path)
-                            ? 'bg-primary text-white'
-                            : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        <div className="w-10 h-10 flex items-center justify-center">
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        {!isCollapsed && <span className="ml-2">{item.name}</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <div className="space-y-1">
-                  {accountItems.map((item) => {
-                    const Icon = item.icon;
-                    return (
-                      <button
-                        key={item.path}
-                        onClick={() => navigate(item.path)}
-                        className={`flex items-center justify-center md:justify-start w-full h-10 px-2 text-sm rounded-md ${
-                          isActive(item.path)
-                            ? 'bg-primary text-white'
-                            : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                      >
-                        <div className="w-10 h-10 flex items-center justify-center">
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        {!isCollapsed && <span className="ml-2">{item.name}</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
             </div>
           </div>
         </div>
 
         <div className="p-2 border-t border-gray-200">
+          <button
+            onClick={() => navigate('/settings')}
+            className="flex items-center justify-center md:justify-start w-full h-10 px-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md mb-2"
+          >
+            <div className="w-10 h-10 flex items-center justify-center">
+              <Cog6ToothIcon className="w-5 h-5" />
+            </div>
+            {!isCollapsed && <span className="ml-2">Settings</span>}
+          </button>
           <button
             onClick={handleLogout}
             className="flex items-center justify-center md:justify-start w-full h-10 px-2 text-sm text-red-600 hover:bg-red-50 rounded-md"
@@ -330,10 +234,6 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
   return (
     <>
       {isMobile ? renderMobileNavigation() : renderDesktopNavigation()}
-      <BudgetSettingsModal
-        isOpen={isBudgetSettingsOpen}
-        onClose={() => setIsBudgetSettingsOpen(false)}
-      />
     </>
   );
 };
