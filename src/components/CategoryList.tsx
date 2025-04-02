@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { addCategory, deleteCategory, updateCategory } from '@/store/budgetSlice';
 import { getExchangeRate, currencies } from '@/utils/currencies';
+import { formatCurrency } from '@/utils/formatters';
 
 interface CategoryListProps {
   isEditing: boolean;
@@ -13,7 +14,7 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
   const categories = useSelector((state: RootState) => state.budget.categories);
   const transactions = useSelector((state: RootState) => state.budget.transactions);
   const currentMonth = useSelector((state: RootState) => state.budget.currentMonth);
-  const globalCurrency = useSelector((state: RootState) => state.budget.globalCurrency);
+  const { globalCurrency, currencyFormat } = useSelector((state: RootState) => state.budget);
   
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -195,12 +196,12 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-content-secondary">
-                      {currencySymbol}{activity.toFixed(2)}
+                      {formatCurrency(activity, currencyFormat)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-content-secondary">
-                      {currencySymbol}{remaining.toFixed(2)}
+                      {formatCurrency(remaining, currencyFormat)}
                     </div>
                     <div className="mt-1 w-full bg-gray-200 rounded-full h-2">
                       <div

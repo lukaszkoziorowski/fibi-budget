@@ -4,6 +4,7 @@ import { RootState } from "@/store";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { updateTransaction } from "@/store/budgetSlice";
+import { formatCurrency } from '@/utils/formatters';
 
 interface EditingState {
   id: string | null;
@@ -12,9 +13,11 @@ interface EditingState {
 
 const TransactionList = () => {
   const dispatch = useDispatch();
-  const { transactions, categories } = useSelector((state: RootState) => state.budget);
+  const transactions = useSelector((state: RootState) => state.budget.transactions);
+  const categories = useSelector((state: RootState) => state.budget.categories);
+  const { globalCurrency, currencyFormat } = useSelector((state: RootState) => state.budget);
   const [editing, setEditing] = useState<EditingState>({ id: null, field: null });
-  const [editValue, setEditValue] = useState("");
+  const [editValue, setEditValue] = useState('');
   const [showCalendar, setShowCalendar] = useState(false);
 
   const getCategoryName = (categoryId: string) => {
@@ -72,30 +75,27 @@ const TransactionList = () => {
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+      <table className="min-w-full divide-y divide-secondary">
+        <thead className="bg-background">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
               Date
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Seller
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
+              Description
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
               Category
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Type
-            </th>
-            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-content-secondary uppercase tracking-wider">
               Amount
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-background divide-y divide-secondary">
           {transactions.map((transaction) => (
             <tr key={transaction.id}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-6 py-4 whitespace-nowrap">
                 {editing.id === transaction.id && editing.field === 'date' ? (
                   <input
                     type="date"
@@ -109,13 +109,13 @@ const TransactionList = () => {
                 ) : (
                   <button
                     onClick={() => handleEdit(transaction, 'date')}
-                    className="hover:text-primary"
+                    className="text-sm text-content-primary hover:opacity-75"
                   >
-                    {format(new Date(transaction.date), "MMM d, yyyy", { locale: enUS })}
+                    {format(new Date(transaction.date), 'MMM d, yyyy', { locale: enUS })}
                   </button>
                 )}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              <td className="px-6 py-4 whitespace-nowrap">
                 {editing.id === transaction.id && editing.field === 'description' ? (
                   <input
                     type="text"
@@ -129,13 +129,13 @@ const TransactionList = () => {
                 ) : (
                   <button
                     onClick={() => handleEdit(transaction, 'description')}
-                    className="hover:text-primary text-left w-full"
+                    className="text-sm text-content-primary hover:opacity-75"
                   >
                     {transaction.description}
                   </button>
                 )}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-6 py-4 whitespace-nowrap">
                 {editing.id === transaction.id && editing.field === 'categoryId' ? (
                   <select
                     value={editValue}
@@ -153,30 +153,9 @@ const TransactionList = () => {
                 ) : (
                   <button
                     onClick={() => handleEdit(transaction, 'categoryId')}
-                    className="hover:text-primary"
+                    className="text-sm text-content-secondary hover:opacity-75"
                   >
-                    {getCategoryName(transaction.categoryId)}
-                  </button>
-                )}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {editing.id === transaction.id && editing.field === 'type' ? (
-                  <select
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    onBlur={() => handleSave(transaction)}
-                    className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-                    autoFocus
-                  >
-                    <option value="income">Income</option>
-                    <option value="expense">Expense</option>
-                  </select>
-                ) : (
-                  <button
-                    onClick={() => handleEdit(transaction, 'type')}
-                    className="hover:text-primary"
-                  >
-                    {transaction.type === 'income' ? 'Income' : 'Expense'}
+                    {categories.find((c) => c.id === transaction.categoryId)?.name}
                   </button>
                 )}
               </td>
@@ -200,7 +179,7 @@ const TransactionList = () => {
                     className="hover:opacity-75 w-full text-right"
                   >
                     {transaction.type === "income" ? "+" : "-"}
-                    {Math.abs(transaction.amount).toLocaleString("en-US", { style: "currency", currency: "USD" })}
+                    {formatCurrency(Math.abs(transaction.amount), currencyFormat)}
                   </button>
                 )}
               </td>

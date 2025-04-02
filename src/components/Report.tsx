@@ -5,6 +5,7 @@ import { enUS } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
 import { currencies } from '@/utils/currencies';
 import { getExchangeRate } from '@/utils/currencies';
+import { formatCurrency } from '@/utils/formatters';
 import {
   AreaChart,
   Area,
@@ -16,7 +17,7 @@ import {
 } from 'recharts';
 
 const Report = () => {
-  const { transactions, globalCurrency } = useSelector((state: RootState) => state.budget);
+  const { transactions, globalCurrency, currencyFormat } = useSelector((state: RootState) => state.budget);
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const currencySymbol = currencies.find(c => c.code === globalCurrency)?.symbol || '$';
 
@@ -107,10 +108,10 @@ const Report = () => {
                     <span className="text-sm font-medium text-gray-900">{data.month}</span>
                     <div className="flex gap-4">
                       <span className="text-sm text-green-600">
-                        +{currencySymbol}{data.income.toFixed(2)}
+                        +{currencySymbol}{formatCurrency(data.income, currencyFormat)}
                       </span>
                       <span className="text-sm text-red-600">
-                        -{currencySymbol}{data.expenses.toFixed(2)}
+                        -{currencySymbol}{formatCurrency(data.expenses, currencyFormat)}
                       </span>
                     </div>
                   </div>
@@ -155,12 +156,12 @@ const Report = () => {
                 />
                 <YAxis 
                   tick={{ fill: '#6B7280' }}
-                  tickFormatter={(value) => `${currencySymbol}${value.toLocaleString()}`}
+                  tickFormatter={(value) => formatCurrency(value, currencyFormat)}
                 />
                 <Tooltip 
                   formatter={(value: string | number | Array<string | number>) => {
                     if (typeof value === 'number') {
-                      return [`${currencySymbol}${value.toFixed(2)}`, 'Expenses'];
+                      return [formatCurrency(value, currencyFormat), 'Expenses'];
                     }
                     return [value, 'Expenses'];
                   }}
