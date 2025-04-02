@@ -2,9 +2,32 @@ import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { enUS } from 'date-fns/locale';
+import { useState, useEffect } from 'react';
+import { currencies } from '@/utils/currencies';
+import { getExchangeRate } from '@/utils/currencies';
 
 const Report = () => {
-  const { transactions } = useSelector((state: RootState) => state.budget);
+  const { transactions, globalCurrency } = useSelector((state: RootState) => state.budget);
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
+  const currencySymbol = currencies.find(c => c.code === globalCurrency)?.symbol || '$';
+
+  // Fetch exchange rates for all currencies used in transactions
+  useEffect(() => {
+    const fetchRates = async () => {
+      const uniqueCurrencies = new Set(transactions.map(t => t.originalCurrency || t.currency));
+      const rates: Record<string, number> = {};
+      
+      for (const currency of uniqueCurrencies) {
+        if (currency !== globalCurrency) {
+          rates[currency] = await getExchangeRate(currency, globalCurrency);
+        }
+      }
+      
+      setExchangeRates(rates);
+    };
+
+    fetchRates();
+  }, [transactions, globalCurrency]);
 
   // Get transactions from last 6 months
   const getMonthlyData = () => {
@@ -22,11 +45,25 @@ const Report = () => {
 
       const income = monthTransactions
         .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + t.amount, 0);
+        .reduce((sum, t) => {
+          let amount = t.amount;
+          // Convert amount if it's in a different currency
+          if (t.originalAmount && t.originalCurrency && t.originalCurrency !== globalCurrency) {
+            amount = t.originalAmount * (exchangeRates[t.originalCurrency] || 1);
+          }
+          return sum + amount;
+        }, 0);
 
       const expenses = monthTransactions
         .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+        .reduce((sum, t) => {
+          let amount = Math.abs(t.amount);
+          // Convert amount if it's in a different currency
+          if (t.originalAmount && t.originalCurrency && t.originalCurrency !== globalCurrency) {
+            amount = Math.abs(t.originalAmount * (exchangeRates[t.originalCurrency] || 1));
+          }
+          return sum + amount;
+        }, 0);
 
       months.push({
         month: format(monthStart, 'MMMM yyyy', { locale: enUS }),
@@ -58,10 +95,10 @@ const Report = () => {
                   <span className="text-sm font-medium text-gray-900">{data.month}</span>
                   <div className="flex gap-4">
                     <span className="text-sm text-green-600">
-                      +${data.income.toFixed(2)}
+                      +{currencySymbol}{data.income.toFixed(2)}
                     </span>
                     <span className="text-sm text-red-600">
-                      -${data.expenses.toFixed(2)}
+                      -{currencySymbol}{data.expenses.toFixed(2)}
                     </span>
                   </div>
                 </div>

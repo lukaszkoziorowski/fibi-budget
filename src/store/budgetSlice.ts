@@ -140,11 +140,13 @@ const budgetSlice = createSlice({
     },
     // Add a new action to clear all data
     clearAllData: (state) => {
+      const currentCurrency = state.globalCurrency; // Preserve current currency
       state.categories = [];
       state.transactions = [];
       state.balance = 0;
       state.currentMonth = new Date().toISOString();
-      localStorage.removeItem('budgetState');
+      state.globalCurrency = currentCurrency; // Keep the same currency
+      saveState(state); // Save the state with preserved currency
     },
   },
 });
