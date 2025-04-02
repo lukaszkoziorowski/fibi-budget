@@ -13,6 +13,9 @@ export interface Transaction {
   categoryId: string;
   type: 'income' | 'expense';
   date: string;
+  currency: string;
+  originalAmount?: number;
+  originalCurrency?: string;
 }
 
 interface BudgetState {
@@ -20,6 +23,7 @@ interface BudgetState {
   transactions: Transaction[];
   balance: number;
   currentMonth: string;
+  globalCurrency: string;
 }
 
 // Load initial state from localStorage if available
@@ -27,12 +31,18 @@ const loadState = (): BudgetState => {
   try {
     const serializedState = localStorage.getItem('budgetState');
     if (serializedState === null) {
-      return {
+      // Initialize with empty categories
+      const initialState = {
         categories: [],
         transactions: [],
         balance: 0,
         currentMonth: new Date().toISOString(),
+        globalCurrency: 'USD',
       };
+      
+      // Save the initial state
+      localStorage.setItem('budgetState', JSON.stringify(initialState));
+      return initialState;
     }
     return JSON.parse(serializedState);
   } catch (err) {
@@ -42,6 +52,7 @@ const loadState = (): BudgetState => {
       transactions: [],
       balance: 0,
       currentMonth: new Date().toISOString(),
+      globalCurrency: 'USD',
     };
   }
 };
@@ -80,28 +91,51 @@ const budgetSlice = createSlice({
     },
     addTransaction: (state, action: PayloadAction<Transaction>) => {
       state.transactions.push(action.payload);
-      state.balance += action.payload.amount;
+      if (action.payload.currency === state.globalCurrency) {
+        state.balance += action.payload.amount;
+      } else {
+        // If transaction is in a different currency, use the converted amount
+        state.balance += action.payload.amount;
+        // Original amount and currency are stored for reference
+      }
       saveState(state);
     },
     updateTransaction: (state, action: PayloadAction<Transaction>) => {
       const index = state.transactions.findIndex(t => t.id === action.payload.id);
       if (index !== -1) {
-        state.balance -= state.transactions[index].amount;
+        // Remove old transaction's impact on balance
+        if (state.transactions[index].currency === state.globalCurrency) {
+          state.balance -= state.transactions[index].amount;
+        }
         
-        const newAmount = action.payload.type === 'expense' 
-          ? -Math.abs(Number(action.payload.amount))
-          : Math.abs(Number(action.payload.amount));
+        // Add new transaction's impact on balance
+        if (action.payload.currency === state.globalCurrency) {
+          state.balance += action.payload.amount;
+        }
         
-        state.balance += newAmount;
-        state.transactions[index] = {
-          ...action.payload,
-          amount: newAmount
-        };
+        state.transactions[index] = action.payload;
         saveState(state);
       }
     },
     setCurrentMonth: (state, action: PayloadAction<string>) => {
+      const previousMonth = state.currentMonth;
       state.currentMonth = action.payload;
+
+      // If moving to a different month, only preserve categories and their budgets
+      if (new Date(previousMonth).getMonth() !== new Date(action.payload).getMonth()) {
+        // Keep existing categories with their budgets
+        const existingCategories = state.categories.map(category => ({
+          ...category
+        }));
+
+        // Keep categories with their budgets, but preserve all transactions
+        state.categories = existingCategories;
+      }
+      
+      saveState(state);
+    },
+    setGlobalCurrency: (state, action: PayloadAction<string>) => {
+      state.globalCurrency = action.payload;
       saveState(state);
     },
     // Add a new action to clear all data
@@ -122,6 +156,7 @@ export const {
   addTransaction,
   updateTransaction,
   setCurrentMonth,
+  setGlobalCurrency,
   clearAllData,
 } = budgetSlice.actions;
 

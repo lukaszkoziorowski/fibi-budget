@@ -33,11 +33,11 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
       <div className="flex flex-col h-full">
         {/* Logo */}
         <div className="p-4 border-b border-secondary">
-          <div className="flex items-center justify-center">
+          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
             {isCollapsed ? (
               <span className="text-2xl font-bold text-primary">F</span>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center">
                 <span className="text-2xl font-bold text-primary">Fibi</span>
                 <span className="text-2xl font-bold text-content-primary">Budget</span>
               </div>

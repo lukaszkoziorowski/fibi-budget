@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { addCategory, deleteCategory, updateCategory } from '@/store/budgetSlice';
+import { getExchangeRate, currencies } from '@/utils/currencies';
 
 interface CategoryListProps {
   isEditing: boolean;
@@ -11,11 +12,34 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
   const dispatch = useDispatch();
   const categories = useSelector((state: RootState) => state.budget.categories);
   const transactions = useSelector((state: RootState) => state.budget.transactions);
+  const currentMonth = useSelector((state: RootState) => state.budget.currentMonth);
+  const globalCurrency = useSelector((state: RootState) => state.budget.globalCurrency);
   
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [editingBudget, setEditingBudget] = useState('');
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
+
+  const currencySymbol = currencies.find(c => c.code === globalCurrency)?.symbol || '$';
+
+  // Fetch exchange rates for all currencies used in transactions
+  useEffect(() => {
+    const fetchRates = async () => {
+      const uniqueCurrencies = new Set(transactions.map(t => t.originalCurrency || t.currency));
+      const rates: Record<string, number> = {};
+      
+      for (const currency of uniqueCurrencies) {
+        if (currency !== globalCurrency) {
+          rates[currency] = await getExchangeRate(currency, globalCurrency);
+        }
+      }
+      
+      setExchangeRates(rates);
+    };
+
+    fetchRates();
+  }, [transactions, globalCurrency]);
 
   const handleAddCategory = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,9 +80,25 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
   };
 
   const calculateCategoryActivity = (categoryId: string) => {
+    const currentMonthDate = new Date(currentMonth);
     return transactions
-      .filter((t) => t.categoryId === categoryId && t.type === 'expense')
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+      .filter((t) => {
+        const transactionDate = new Date(t.date);
+        return t.categoryId === categoryId && 
+               t.type === 'expense' &&
+               transactionDate.getMonth() === currentMonthDate.getMonth() &&
+               transactionDate.getFullYear() === currentMonthDate.getFullYear();
+      })
+      .reduce((sum, t) => {
+        let amount = Math.abs(t.amount);
+        
+        // If the transaction has an original amount and currency
+        if (t.originalAmount && t.originalCurrency && t.originalCurrency !== globalCurrency) {
+          amount = Math.abs(t.originalAmount * (exchangeRates[t.originalCurrency] || 1));
+        }
+        
+        return sum + amount;
+      }, 0);
   };
 
   const handleStartEditing = (category: { id: string; name: string; budget: number }) => {
@@ -130,31 +170,37 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     {isEditing ? (
-                      <input
-                        type="number"
-                        value={editingBudget}
-                        onChange={(e) => setEditingBudget(e.target.value)}
-                        className="input-primary w-24"
-                        step="0.01"
-                      />
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-content-secondary">{currencySymbol}</span>
+                        <input
+                          type="number"
+                          value={editingBudget}
+                          onChange={(e) => setEditingBudget(e.target.value)}
+                          className="input-primary w-24"
+                          step="0.01"
+                        />
+                      </div>
                     ) : (
-                      <input
-                        type="number"
-                        value={category.budget}
-                        onChange={(e) => handleBudgetChange(category, e.target.value)}
-                        className="input-primary w-24"
-                        step="0.01"
-                      />
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-content-secondary">{currencySymbol}</span>
+                        <input
+                          type="number"
+                          value={category.budget}
+                          onChange={(e) => handleBudgetChange(category, e.target.value)}
+                          className="input-primary w-24"
+                          step="0.01"
+                        />
+                      </div>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-content-secondary">
-                      ${activity.toFixed(2)}
+                      {currencySymbol}{activity.toFixed(2)}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-content-secondary">
-                      ${remaining.toFixed(2)}
+                      {currencySymbol}{remaining.toFixed(2)}
                     </div>
                     <div className="mt-1 w-full bg-gray-200 rounded-full h-2">
                       <div

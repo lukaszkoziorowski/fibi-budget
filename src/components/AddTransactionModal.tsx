@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Dialog } from '@headlessui/react';
 import { addTransaction } from '@/store/budgetSlice';
 import { RootState } from '@/store';
+import { currencies, getExchangeRate } from '@/utils/currencies';
 
 interface AddTransactionModalProps {
   isOpen: boolean;
@@ -13,12 +14,19 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
   const dispatch = useDispatch();
   const categories = useSelector((state: RootState) => state.budget.categories);
   const transactions = useSelector((state: RootState) => state.budget.transactions);
+  const globalCurrency = useSelector((state: RootState) => state.budget.globalCurrency);
   
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [type, setType] = useState<'income' | 'expense'>('expense');
+  const [currency, setCurrency] = useState(globalCurrency);
   const [showSuggestions, setShowSuggestions] = useState(false);
+
+  // Reset currency when global currency changes
+  useEffect(() => {
+    setCurrency(globalCurrency);
+  }, [globalCurrency]);
 
   // Get unique sellers from historical transactions
   const suggestions = Array.from(new Set(
@@ -27,25 +35,42 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
       .map(t => t.description)
   )).slice(0, 5); // Limit to 5 suggestions
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || !description) return;
     if (type === 'expense' && !categoryId) return;
 
+    const numericAmount = type === 'expense' ? -Number(amount) : Number(amount);
+    let convertedAmount = numericAmount;
+    let originalAmount = undefined;
+    let originalCurrency = undefined;
+
+    // Convert amount if currency is different from global currency
+    if (currency !== globalCurrency) {
+      const rate = await getExchangeRate(currency, globalCurrency);
+      convertedAmount = numericAmount * rate;
+      originalAmount = numericAmount;
+      originalCurrency = currency;
+    }
+
     dispatch(
       addTransaction({
         id: Date.now().toString(),
-        amount: type === 'expense' ? -Number(amount) : Number(amount),
+        amount: convertedAmount,
         description,
         categoryId: type === 'expense' ? categoryId : 'income',
         date: new Date().toISOString(),
         type,
+        currency: globalCurrency,
+        originalAmount,
+        originalCurrency,
       })
     );
 
     setAmount('');
     setDescription('');
     setCategoryId('');
+    setCurrency(globalCurrency);
     onClose();
   };
 
@@ -104,23 +129,41 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
               </div>
             </div>
 
-            {/* Amount input */}
+            {/* Amount and Currency input */}
             <div className="bg-gray-50 rounded-xl p-6 text-center">
-              <div className="relative">
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 text-5xl text-content-secondary font-light">
-                  $
-                </span>
-                <input
-                  type="number"
-                  id="amount"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  className="w-full bg-transparent text-6xl font-light text-center focus:outline-none text-content-primary"
-                  placeholder="0.00"
-                  step="0.01"
-                  required
-                />
+              <div className="flex items-center justify-center gap-4">
+                <div className="relative flex-1">
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 text-5xl text-content-secondary font-light">
+                    {currencies.find(c => c.code === currency)?.symbol || '$'}
+                  </span>
+                  <input
+                    type="number"
+                    id="amount"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="w-full bg-transparent text-6xl font-light text-center focus:outline-none text-content-primary"
+                    placeholder="0.00"
+                    step="0.01"
+                    required
+                  />
+                </div>
+                <select
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                >
+                  {currencies.map((curr) => (
+                    <option key={curr.code} value={curr.code}>
+                      {curr.code}
+                    </option>
+                  ))}
+                </select>
               </div>
+              {currency !== globalCurrency && (
+                <div className="mt-2 text-sm text-content-secondary">
+                  Will be converted to {globalCurrency}
+                </div>
+              )}
             </div>
 
             {/* Seller input with autosuggest */}
