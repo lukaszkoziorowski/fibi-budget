@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <style>
+    .purple-money {
+      fill: #9333ea;
+    }
+    .black-panda {
+      fill: #000;
+    }
+    .white-panda {
+      fill: #fff;
+    }
+  </style>
+  
+  <!-- Money -->
+  <g class="purple-money">
+    <rect x="80" y="120" width="100" height="60" rx="5" ry="5" transform="rotate(-10 80 120)"/>
+    <rect x="90" y="135" width="70" height="10" rx="2" ry="2" fill="#fff" transform="rotate(-10 90 135)"/>
+    <path d="M110 145 Q 120 125 130 145 Q 140 165 150 145" stroke="#fff" stroke-width="3" fill="none" transform="rotate(-10 110 145)"/>
+    <text x="125" y="160" font-size="32" font-weight="bold" fill="#fff" text-anchor="middle" transform="rotate(-10 125 160)">$</text>
+  </g>
+  
+  <!-- Panda Body -->
+  <g class="black-panda">
+    <ellipse cx="250" cy="265" rx="120" ry="110"/>  <!-- body -->
+    <circle cx="180" cy="135" r="35"/>  <!-- left ear -->
+    <circle cx="320" cy="135" r="35"/>  <!-- right ear -->
+    
+    <!-- White Belly Highlight -->
+    <path class="white-panda" d="M310 280 A 100 90 0 0 1 190 280 A 100 90 0 0 1 310 280" />
+  </g>
+  
+  <!-- Panda Face -->
+  <g>
+    <circle cx="250" cy="185" r="85" class="white-panda"/>  <!-- face -->
+    
+    <!-- Eyes -->
+    <ellipse cx="215" cy="165" rx="25" ry="35" class="black-panda" transform="rotate(-20 215 165)"/>
+    <ellipse cx="285" cy="165" rx="25" ry="35" class="black-panda" transform="rotate(20 285 165)"/>
+    
+    <!-- Eye Shine -->
+    <circle cx="225" cy="155" r="6" class="white-panda"/>
+    <circle cx="275" cy="155" r="6" class="white-panda"/>
+    
+    <!-- Nose and Mouth -->
+    <ellipse cx="250" cy="205" rx="15" ry="10" class="black-panda"/>
+    <path d="M250 215 L250 225 M235 225 Q250 240 265 225" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Panda Arm -->
+  <g class="black-panda">
+    <path d="M160 220 A 40 40 0 0 0 120 180" stroke="#000" stroke-width="40" fill="none" stroke-linecap="round"/>
+  </g>
+</svg> 

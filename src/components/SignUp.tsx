@@ -132,7 +132,7 @@ const SignUp = () => {
 
       {/* Logo in top-left corner */}
       <div className="p-6 relative z-10">
-        <Link to="/" className="text-3xl font-bold text-white">FiBi.</Link>
+        <Link to="/landing" className="text-3xl font-bold text-white">FiBi.</Link>
       </div>
 
       {/* Main content */}

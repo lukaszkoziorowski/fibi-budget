@@ -19,6 +19,25 @@ module.exports = {
       },
       borderRadius: {
         'button': '12px',
+      },
+      keyframes: {
+        'float-vertical': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        'float-horizontal': {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '50%': { transform: 'translateX(10px)' },
+        },
+        'float-diagonal': {
+          '0%, 100%': { transform: 'translate(0, 0)' },
+          '50%': { transform: 'translate(8px, -8px)' },
+        }
+      },
+      animation: {
+        'float-slow': 'float-vertical 6s ease-in-out infinite',
+        'float-medium': 'float-diagonal 4s ease-in-out infinite',
+        'float-fast': 'float-horizontal 3s ease-in-out infinite',
       }
     },
   },

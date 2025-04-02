@@ -34,6 +34,7 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { currentUser } = useAuth();
+  const { budgetName } = useSelector((state: RootState) => state.budget);
   const [isBudgetSettingsOpen, setIsBudgetSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -58,6 +59,9 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
   ];
 
   const getUserDisplayName = () => {
+    if (budgetName && budgetName !== 'My Budget') {
+      return `${budgetName}'s Budget`;
+    }
     if (currentUser?.displayName) {
       return `${currentUser.displayName}'s Budget`;
     }
