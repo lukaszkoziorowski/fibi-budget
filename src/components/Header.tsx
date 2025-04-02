@@ -33,7 +33,7 @@ const Header = () => {
         <div className="flex justify-between items-center">
           {/* Logo */}
           <div className="flex items-center">
-            <span className="text-2xl font-bold">Fibi Budget</span>
+            <span className="text-2xl font-bold">FiBi - Finance Builder</span>
           </div>
 
           {/* Currency and User section */}

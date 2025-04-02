@@ -8,7 +8,6 @@ import Transactions from '@/components/Transactions';
 import Report from '@/components/Report';
 import Login from './components/Login';
 import SignUp from './components/SignUp';
-import Header from './components/Header';
 import { AuthProvider } from './contexts/AuthContext';
 import { useAuth } from './contexts/AuthContext';
 
@@ -73,25 +72,22 @@ function App() {
               path="/*"
               element={
                 <PrivateRoute>
-                  <div className="min-h-screen bg-background flex flex-col">
-                    <Header />
-                    <div className="flex flex-1">
-                      <Navigation 
-                        isCollapsed={isNavCollapsed} 
-                        onCollapsedChange={setIsNavCollapsed} 
-                      />
-                      <main className={`flex-1 transition-all duration-300 ${
-                        isNavCollapsed ? 'ml-16' : 'ml-64'
-                      }`}>
-                        <div className="max-w-[1000px] mx-auto py-6 px-4">
-                          <Routes>
-                            <Route path="/" element={<Dashboard />} />
-                            <Route path="/transactions" element={<Transactions />} />
-                            <Route path="/report" element={<Report />} />
-                          </Routes>
-                        </div>
-                      </main>
-                    </div>
+                  <div className="min-h-screen bg-background flex">
+                    <Navigation 
+                      isCollapsed={isNavCollapsed} 
+                      onCollapsedChange={setIsNavCollapsed} 
+                    />
+                    <main className={`flex-1 transition-all duration-300 ${
+                      isNavCollapsed ? 'ml-16' : 'ml-64'
+                    }`}>
+                      <div className="max-w-[1000px] mx-auto py-6 px-4">
+                        <Routes>
+                          <Route path="/" element={<Dashboard />} />
+                          <Route path="/transactions" element={<Transactions />} />
+                          <Route path="/report" element={<Report />} />
+                        </Routes>
+                      </div>
+                    </main>
                   </div>
                 </PrivateRoute>
               }

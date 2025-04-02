@@ -5,6 +5,15 @@ import { enUS } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
 import { currencies } from '@/utils/currencies';
 import { getExchangeRate } from '@/utils/currencies';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 
 const Report = () => {
   const { transactions, globalCurrency } = useSelector((state: RootState) => state.budget);
@@ -66,9 +75,10 @@ const Report = () => {
         }, 0);
 
       months.push({
-        month: format(monthStart, 'MMMM yyyy', { locale: enUS }),
+        month: format(monthStart, 'MMM yyyy', { locale: enUS }),
         income,
         expenses,
+        date: monthStart, // Added for sorting
       });
     }
 
@@ -81,42 +91,101 @@ const Report = () => {
   );
 
   return (
-    <div className="bg-white shadow rounded-lg">
-      <div className="px-4 py-5 sm:p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Financial Report</h2>
-        <div className="space-y-6">
-          {monthlyData.map((data) => {
-            const incomePercentage = (data.income / maxAmount) * 100;
-            const expensesPercentage = (data.expenses / maxAmount) * 100;
+    <div className="space-y-8">
+      {/* Financial Report Section */}
+      <div className="bg-white shadow rounded-lg">
+        <div className="px-4 py-5 sm:p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Financial Report</h2>
+          <div className="space-y-6">
+            {monthlyData.map((data) => {
+              const incomePercentage = (data.income / maxAmount) * 100;
+              const expensesPercentage = (data.expenses / maxAmount) * 100;
 
-            return (
-              <div key={data.month} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium text-gray-900">{data.month}</span>
-                  <div className="flex gap-4">
-                    <span className="text-sm text-green-600">
-                      +{currencySymbol}{data.income.toFixed(2)}
-                    </span>
-                    <span className="text-sm text-red-600">
-                      -{currencySymbol}{data.expenses.toFixed(2)}
-                    </span>
+              return (
+                <div key={data.month} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-900">{data.month}</span>
+                    <div className="flex gap-4">
+                      <span className="text-sm text-green-600">
+                        +{currencySymbol}{data.income.toFixed(2)}
+                      </span>
+                      <span className="text-sm text-red-600">
+                        -{currencySymbol}{data.expenses.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="flex h-full">
+                      <div
+                        className="bg-green-500"
+                        style={{ width: `${incomePercentage}%` }}
+                      />
+                      <div
+                        className="bg-red-500"
+                        style={{ width: `${expensesPercentage}%` }}
+                      />
+                    </div>
                   </div>
                 </div>
-                <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="flex h-full">
-                    <div
-                      className="bg-green-500"
-                      style={{ width: `${incomePercentage}%` }}
-                    />
-                    <div
-                      className="bg-red-500"
-                      style={{ width: `${expensesPercentage}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* Expenses Trend Chart */}
+      <div className="bg-white shadow rounded-lg">
+        <div className="px-4 py-5 sm:p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Expenses Trend</h2>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={monthlyData}
+                margin={{
+                  top: 10,
+                  right: 30,
+                  left: 0,
+                  bottom: 0,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="month" 
+                  tick={{ fill: '#6B7280' }}
+                />
+                <YAxis 
+                  tick={{ fill: '#6B7280' }}
+                  tickFormatter={(value) => `${currencySymbol}${value.toLocaleString()}`}
+                />
+                <Tooltip 
+                  formatter={(value: string | number | Array<string | number>) => {
+                    if (typeof value === 'number') {
+                      return [`${currencySymbol}${value.toFixed(2)}`, 'Expenses'];
+                    }
+                    return [value, 'Expenses'];
+                  }}
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '0.375rem',
+                  }}
+                />
+                <defs>
+                  <linearGradient id="expensesGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#9333EA" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#9333EA" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <Area
+                  type="monotone"
+                  dataKey="expenses"
+                  stroke="#9333EA"
+                  fill="url(#expensesGradient)"
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>

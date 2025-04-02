@@ -24,6 +24,13 @@ interface BudgetState {
   balance: number;
   currentMonth: string;
   globalCurrency: string;
+  budgetName: string;
+  currencyFormat: {
+    currency: string;
+    placement: 'before' | 'after';
+    numberFormat: string;
+    dateFormat: string;
+  };
 }
 
 // Load initial state from localStorage if available
@@ -38,6 +45,13 @@ const loadState = (): BudgetState => {
         balance: 0,
         currentMonth: new Date().toISOString(),
         globalCurrency: 'USD',
+        budgetName: 'My Budget',
+        currencyFormat: {
+          currency: 'USD',
+          placement: 'before' as const,
+          numberFormat: '123,456.78',
+          dateFormat: 'MM/DD/YYYY',
+        },
       };
       
       // Save the initial state
@@ -53,6 +67,13 @@ const loadState = (): BudgetState => {
       balance: 0,
       currentMonth: new Date().toISOString(),
       globalCurrency: 'USD',
+      budgetName: 'My Budget',
+      currencyFormat: {
+        currency: 'USD',
+        placement: 'before' as const,
+        numberFormat: '123,456.78',
+        dateFormat: 'MM/DD/YYYY',
+      },
     };
   }
 };
@@ -136,6 +157,18 @@ const budgetSlice = createSlice({
     },
     setGlobalCurrency: (state, action: PayloadAction<string>) => {
       state.globalCurrency = action.payload;
+      // Also update the currency in currencyFormat to keep them in sync
+      state.currencyFormat.currency = action.payload;
+      saveState(state);
+    },
+    setBudgetName: (state, action: PayloadAction<string>) => {
+      state.budgetName = action.payload;
+      saveState(state);
+    },
+    setCurrencyFormat: (state, action: PayloadAction<BudgetState['currencyFormat']>) => {
+      state.currencyFormat = action.payload;
+      // Keep global currency in sync with currency format
+      state.globalCurrency = action.payload.currency;
       saveState(state);
     },
     // Add a new action to clear all data
@@ -159,6 +192,8 @@ export const {
   updateTransaction,
   setCurrentMonth,
   setGlobalCurrency,
+  setBudgetName,
+  setCurrencyFormat,
   clearAllData,
 } = budgetSlice.actions;
 
