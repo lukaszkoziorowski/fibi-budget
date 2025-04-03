@@ -9,6 +9,48 @@ const LandingPage = () => {
   const texts = ['wealth', 'freedom', 'confidence'];
   const period = 1000;
   const [delta, setDelta] = useState(80);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeFeature, setActiveFeature] = useState(0);
+  const [activeFaq, setActiveFaq] = useState(0);
+
+  const features = [
+    {
+      title: "Smart Budget Adjustments",
+      description: "Fibi learns from your spending habits and suggests tweaks to keep you on track."
+    },
+    {
+      title: "Shared Budgeting",
+      description: "Collaborate with family or partners to manage money together."
+    },
+    {
+      title: "Savings Buckets",
+      description: "Set aside money for different goals, like vacations, emergencies, or investments."
+    },
+    {
+      title: "Instant Reports",
+      description: "Generate detailed reports to visualize your financial progress."
+    }
+  ];
+
+  const faqs = [
+    {
+      question: "Is Fibi free to use?",
+      answer: "Fibi offers a free trial, after which you can choose from our affordable plans."
+    },
+    {
+      question: "Can I use Fibi without linking my bank account?",
+      answer: "Yes! You can manually add transactions if you prefer not to sync your accounts."
+    },
+    {
+      question: "How is Fibi different from YNAB?",
+      answer: "Fibi provides a more intuitive experience, enhanced automation, and a flexible pricing model."
+    },
+    {
+      question: "Is my financial data secure?",
+      answer: "Absolutely! We use bank-level encryption to ensure your data remains safe and private."
+    }
+  ];
 
   useEffect(() => {
     let ticker = setInterval(() => {
@@ -17,6 +59,24 @@ const LandingPage = () => {
 
     return () => { clearInterval(ticker) };
   }, [displayText, isDeleting]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      setIsScrolled(scrollPosition > window.innerHeight * 0.2);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveFeature((prev) => (prev + 1) % features.length);
+    }, 10000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   const tick = () => {
     let i = loopNum % texts.length;
@@ -42,139 +102,552 @@ const LandingPage = () => {
     }
   };
 
+  const handleFeatureClick = (index: number) => {
+    setActiveFeature(index);
+  };
+
+  const handleFaqClick = (index: number) => {
+    setActiveFaq(activeFaq === index ? -1 : index);
+  };
+
   return (
     <div className="min-h-screen flex flex-col relative bg-[rgb(88,0,159)]">
       {/* Navigation */}
-      <header className="relative z-10 w-full py-5 px-6 md:px-12 flex items-center">
-        <Link to="/landing" className="text-3xl font-bold text-white mr-12">FiBi.</Link>
-        
-        <nav className="hidden md:flex items-center space-x-8 flex-1">
-          <Link to="/landing" className="text-white hover:text-white font-medium">Home</Link>
-          <Link to="/landing/about" className="text-white hover:text-white font-medium">What is FiBi?</Link>
-          <Link to="/landing/learn" className="text-white hover:text-white font-medium">Learn</Link>
-          <Link to="/landing/share" className="text-white hover:text-white font-medium">Share FiBi</Link>
-          <Link to="/landing/pricing" className="text-white hover:text-white font-medium">Pricing</Link>
-        </nav>
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-white shadow-md' 
+          : 'bg-transparent'
+      }`}>
+        <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-20">
+          <div className="flex items-center justify-between h-20">
+            {/* Logo */}
+            <Link to="/landing" className="flex items-center">
+              <img 
+                src={isScrolled ? "/logo-default.svg" : "/logo-white.svg"} 
+                alt="FiBi" 
+                className="h-8"
+              />
+            </Link>
 
-        <div className="flex items-center space-x-4 ml-auto">
-          <Link to="/login" className="text-white hover:text-white font-medium">Log in</Link>
-          <Link 
-            to="/signup" 
-            className="bg-[rgb(147,51,234)] hover:bg-purple-800 text-white hover:text-white px-6 py-2 rounded-full font-medium transition-colors"
-          >
-            Start Your Free Trial
-          </Link>
+            {/* Desktop Navigation - Centered */}
+            <div className="hidden md:flex items-center justify-center flex-1">
+              <div className="flex items-center space-x-8">
+                <Link 
+                  to="/landing#features" 
+                  className={`transition-colors ${
+                    isScrolled ? 'text-gray-700 hover:text-purple-600' : 'text-white hover:text-purple-200'
+                  }`}
+                >
+                  Features
+                </Link>
+                <Link 
+                  to="/landing#pricing" 
+                  className={`transition-colors ${
+                    isScrolled ? 'text-gray-700 hover:text-purple-600' : 'text-white hover:text-purple-200'
+                  }`}
+                >
+                  Pricing
+                </Link>
+                <Link 
+                  to="/landing#about" 
+                  className={`transition-colors ${
+                    isScrolled ? 'text-gray-700 hover:text-purple-600' : 'text-white hover:text-purple-200'
+                  }`}
+                >
+                  About
+                </Link>
+                <Link 
+                  to="/landing#contact" 
+                  className={`transition-colors ${
+                    isScrolled ? 'text-gray-700 hover:text-purple-600' : 'text-white hover:text-purple-200'
+                  }`}
+                >
+                  Contact
+                </Link>
+              </div>
+            </div>
+
+            {/* Auth Buttons */}
+            <div className="hidden md:flex items-center space-x-4">
+              <Link 
+                to="/signin" 
+                className={`transition-colors ${
+                  isScrolled ? 'text-gray-700 hover:text-purple-600' : 'text-white hover:text-purple-200'
+                }`}
+              >
+                Sign In
+              </Link>
+              <Link 
+                to="/signup" 
+                className="bg-[rgb(147,51,234)] hover:bg-purple-800 text-white hover:text-white px-6 py-2 rounded-md font-medium transition-colors"
+              >
+                Get Started
+              </Link>
+            </div>
+
+            {/* Mobile menu button */}
+            <button 
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className={`md:hidden transition-colors ${
+                isScrolled ? 'text-gray-700 hover:text-purple-600' : 'text-white hover:text-purple-200'
+              }`}
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
+
+          {/* Mobile Navigation */}
+          {isMobileMenuOpen && (
+            <div className={`md:hidden py-4 ${
+              isScrolled ? 'bg-white' : 'bg-transparent'
+            }`}>
+              <div className="flex flex-col space-y-4">
+                <Link 
+                  to="/landing#features" 
+                  className={`transition-colors ${
+                    isScrolled ? 'text-gray-700 hover:text-purple-600' : 'text-white hover:text-purple-200'
+                  }`}
+                >
+                  Features
+                </Link>
+                <Link 
+                  to="/landing#pricing" 
+                  className={`transition-colors ${
+                    isScrolled ? 'text-gray-700 hover:text-purple-600' : 'text-white hover:text-purple-200'
+                  }`}
+                >
+                  Pricing
+                </Link>
+                <Link 
+                  to="/landing#about" 
+                  className={`transition-colors ${
+                    isScrolled ? 'text-gray-700 hover:text-purple-600' : 'text-white hover:text-purple-200'
+                  }`}
+                >
+                  About
+                </Link>
+                <Link 
+                  to="/landing#contact" 
+                  className={`transition-colors ${
+                    isScrolled ? 'text-gray-700 hover:text-purple-600' : 'text-white hover:text-purple-200'
+                  }`}
+                >
+                  Contact
+                </Link>
+                <Link 
+                  to="/signin" 
+                  className={`transition-colors ${
+                    isScrolled ? 'text-gray-700 hover:text-purple-600' : 'text-white hover:text-purple-200'
+                  }`}
+                >
+                  Sign In
+                </Link>
+                <Link 
+                  to="/signup" 
+                  className="bg-[rgb(147,51,234)] hover:bg-purple-800 text-white hover:text-white px-6 py-2 rounded-md font-medium transition-colors text-center"
+                >
+                  Get Started
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
-      </header>
+      </nav>
 
       {/* Main content */}
       <main className="flex-1 flex flex-col">
         {/* Hero Section */}
-        <section className="relative z-10 flex-1 flex flex-col items-center justify-center py-20 px-6 md:px-12 lg:px-20">
-          <div className="max-w-3xl w-full text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-8">
-              Build <span className="relative inline-block min-w-[160px]">
+        <section className="relative flex-1 flex flex-col items-center justify-center py-20 px-6 md:px-12 lg:px-20 pt-32">
+          {/* Purple background container */}
+          <div className="absolute inset-0 bg-[rgb(88,0,159)]" style={{ height: '50%' }}></div>
+          
+          {/* Content container */}
+          <div className="relative z-10 w-full">
+            <div className="max-w-3xl w-full text-center mx-auto">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-8">
+                Build <span className="relative inline-block min-w-[160px]">
+                  <span className="relative">
+                    {displayText}
+                    <span className="inline-block h-full w-1 bg-white animate-blink ml-1 align-middle">&#8203;</span>
+                  </span>
+                </span> with <br />
                 <span className="relative">
-                  {displayText}
-                  <span className="inline-block h-full w-1 bg-white animate-blink ml-1 align-middle">&#8203;</span>
+                  Finance
+                  <span className="absolute inset-x-0 bottom-2 h-1 bg-white opacity-50"></span>
                 </span>
-              </span> with <br />
-              <span className="relative">
-                Finance
-                <span className="absolute inset-x-0 bottom-2 h-1 bg-white opacity-50"></span>
-              </span>
-              <span className="ml-2 relative">
-                Builder
-                <span className="absolute inset-x-0 bottom-2 h-1 bg-white opacity-50"></span>
-              </span>
-            </h1>
-            <p className="text-xl text-purple-100 mb-10 mx-auto max-w-2xl">
-              Create a friendly, flexible plan and spend it well with FiBi.
-            </p>
-            <Link 
-              to="/signup" 
-              className="inline-block bg-[rgb(147,51,234)] hover:bg-purple-800 text-white hover:text-white px-10 py-4 rounded-md font-medium text-lg transition-colors"
-            >
-              Start Your Free Trial
-            </Link>
-            <p className="text-purple-200 mt-6">It's easy! No credit card required.</p>
+                <span className="ml-2 relative">
+                  Builder
+                  <span className="absolute inset-x-0 bottom-2 h-1 bg-white opacity-50"></span>
+                </span>
+              </h1>
+              <p className="text-xl text-purple-100 mb-10 mx-auto max-w-2xl">
+                Create a friendly, flexible plan and spend it well with FiBi.
+              </p>
+              <Link 
+                to="/signup" 
+                className="inline-block bg-[rgb(147,51,234)] hover:bg-purple-800 text-white hover:text-white px-10 py-4 rounded-md font-medium text-lg transition-colors"
+              >
+                Start Your Free Trial
+              </Link>
+              <p className="text-purple-200 mt-6">It's easy! No credit card required.</p>
+            </div>
+
+            {/* iPad Mockup */}
+            <div className="mt-16 w-full max-w-[90vw] mx-auto">
+              <img 
+                src="/example-safari.png" 
+                alt="FiBi App in Safari" 
+                className="w-full h-auto shadow-2xl rounded-lg"
+              />
+            </div>
           </div>
         </section>
-      </main>
 
-      {/* Wave Divider */}
-      <div className="relative z-10">
-        <div className="bg-[rgb(88,0,159)] relative overflow-hidden">          
-          {/* Wave SVG */}
-          <svg className="w-full relative z-10" style={{ display: 'block' }} preserveAspectRatio="none" viewBox="0 0 1440 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M0,0L40,16C80,32,160,64,240,69.3C320,75,400,53,480,42.7C560,32,640,32,720,42.7C800,53,880,75,960,80C1040,85,1120,75,1200,58.7C1280,43,1360,21,1400,10.7L1440,0L1440,120L1400,120C1360,120,1280,120,1200,120C1120,120,1040,120,960,120C880,120,800,120,720,120C640,120,560,120,480,120C400,120,320,120,240,120C160,120,80,120,40,120L0,120Z" fill="rgb(147,51,234)" />
-            <path d="M0,42L40,48C80,53,160,64,240,64C320,64,400,53,480,48C560,43,640,43,720,53.3C800,64,880,85,960,85.3C1040,85,1120,64,1200,53.3C1280,43,1360,43,1400,42.7L1440,43L1440,120L1400,120C1360,120,1280,120,1200,120C1120,120,1040,120,960,120C880,120,800,120,720,120C640,120,560,120,480,120C400,120,320,120,240,120C160,120,80,120,40,120L0,120Z" fill="rgba(147,51,234,0.8)" />
-            <path d="M0,85L40,90.7C80,96,160,107,240,101.3C320,96,400,75,480,74.7C560,75,640,96,720,96C800,96,880,75,960,74.7C1040,75,1120,96,1200,96C1280,96,1360,75,1400,64L1440,53L1440,120L1400,120C1360,120,1280,120,1200,120C1120,120,1040,120,960,120C880,120,800,120,720,120C640,120,560,120,480,120C400,120,320,120,240,120C160,120,80,120,40,120L0,120Z" fill="rgba(147,51,234,0.6)" />
-          </svg>
-        </div>
-      </div>
+        {/* Why FiBi Works Section */}
+        <section className="relative z-10 py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-6 md:px-12">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Why FiBi Works</h2>
+              <p className="text-xl text-gray-600">92% of FiBi users feel less money stress since starting. You're next.</p>
+            </div>
 
-      {/* Why FiBi Works Section */}
-      <section className="relative z-10 py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Why FiBi Works</h2>
-            <p className="text-xl text-gray-600">92% of FiBi users feel less money stress since starting. You're next.</p>
-          </div>
+            <div className="grid grid-cols-1 max-w-3xl mx-auto gap-12 items-center">
+              <div className="space-y-12">
+                <div className="flex gap-6">
+                  <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Learn our secret sauce</h3>
+                    <p className="text-gray-700">Our method has only one ingredient: Give every dollar a job. We'll teach you how.</p>
+                  </div>
+                </div>
 
-          <div className="grid grid-cols-1 max-w-3xl mx-auto gap-12 items-center">
-            <div className="space-y-12">
-              <div className="flex gap-6">
-                <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 6v6l4 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                  </svg>
+                <div className="flex gap-6">
+                  <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Fund your wildest dreams...and your water bill</h3>
+                    <p className="text-gray-700">Use the app to define priorities and guide spending decisions toward the life you want.</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Learn our secret sauce</h3>
-                  <p className="text-gray-700">Our method has only one ingredient: Give every dollar a job. We'll teach you how.</p>
-                </div>
-              </div>
 
-              <div className="flex gap-6">
-                <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                <div className="flex gap-6">
+                  <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                    <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22 12H18L15 21L9 3L6 12H2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Live spendfully</h3>
+                    <p className="text-gray-700">Improve relationships, sleep better at night, and achieve your goals through intentional spending.</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Fund your wildest dreams...and your water bill</h3>
-                  <p className="text-gray-700">Use the app to define priorities and guide spending decisions toward the life you want.</p>
-                </div>
-              </div>
 
-              <div className="flex gap-6">
-                <div className="flex-shrink-0 w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M22 12H18L15 21L9 3L6 12H2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                <div className="mt-8">
+                  <Link 
+                    to="/signup" 
+                    className="inline-block bg-[rgb(147,51,234)] hover:bg-purple-800 text-white hover:text-white px-6 py-3 rounded-md font-medium transition-colors"
+                  >
+                    Start Your Free 34 Day Trial
+                  </Link>
                 </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Live spendfully</h3>
-                  <p className="text-gray-700">Improve relationships, sleep better at night, and achieve your goals through intentional spending.</p>
-                </div>
-              </div>
-
-              <div className="mt-8">
-                <Link 
-                  to="/signup" 
-                  className="inline-block bg-[rgb(147,51,234)] hover:bg-purple-800 text-white hover:text-white px-6 py-3 rounded-md font-medium transition-colors"
-                >
-                  Start Your Free 34 Day Trial
-                </Link>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+
+        {/* Interactive Features Section */}
+        <section className="relative z-10 py-20 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-6 md:px-12">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+              {/* Left side - Features list */}
+              <div className="space-y-8">
+                <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-8">Discover FiBi's Features</h2>
+                
+                {features.map((feature, index) => (
+                  <div 
+                    key={feature.title}
+                    className={`relative cursor-pointer transition-all duration-300 ${
+                      activeFeature === index ? 'pb-8' : ''
+                    }`}
+                    onClick={() => handleFeatureClick(index)}
+                  >
+                    <div className="flex items-center gap-4">
+                      {/* Progress bar */}
+                      <div className="w-1 h-16 bg-gray-200 rounded-full relative overflow-hidden">
+                        <div 
+                          className={`absolute top-0 left-0 w-full bg-primary transition-all duration-300 ${
+                            activeFeature === index ? 'h-full' : 'h-0'
+                          }`}
+                          style={{
+                            transition: activeFeature === index ? 'height 10s linear' : 'none',
+                            transformOrigin: 'top'
+                          }}
+                          onTransitionEnd={(e) => {
+                            if (e.propertyName === 'height' && activeFeature === index) {
+                              setActiveFeature((prev) => (prev + 1) % features.length);
+                            }
+                          }}
+                        />
+                      </div>
+                      
+                      <div className="flex-1">
+                        <h3 className={`text-xl font-semibold mb-2 transition-colors ${
+                          activeFeature === index ? 'text-primary' : 'text-gray-900'
+                        }`}>
+                          {feature.title}
+                        </h3>
+                        <div className={`overflow-hidden transition-all duration-300 ${
+                          activeFeature === index ? 'max-h-32' : 'max-h-0'
+                        }`}>
+                          <p className="text-gray-600">{feature.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Right side - Feature preview */}
+              <div className="relative h-[600px] bg-gray-100 rounded-lg overflow-hidden">
+                {features.map((feature, index) => (
+                  <div
+                    key={feature.title}
+                    className={`absolute inset-0 transition-opacity duration-300 ${
+                      activeFeature === index ? 'opacity-100' : 'opacity-0'
+                    }`}
+                  >
+                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                      <span className="text-gray-400 text-lg">Feature Preview {index + 1}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* How It Works Section */}
+        <section className="relative z-10 py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-6 md:px-12">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">How It Works</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-primary">1</span>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Set Up Your Budget</h3>
+                <p className="text-gray-600">Categorize your income and expenses so every dollar is accounted for.</p>
+              </div>
+
+              <div className="text-center">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-primary">2</span>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Track Your Spending</h3>
+                <p className="text-gray-600">Fibi syncs with your accounts so you can monitor your money in real time.</p>
+              </div>
+
+              <div className="text-center">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl font-bold text-primary">3</span>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Adjust and Optimize</h3>
+                <p className="text-gray-600">Adapt your budget as life changes to always stay on track.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials Section */}
+        <section className="relative z-10 py-20 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-6 md:px-12">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">What Our Users Say</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <span className="text-xl font-bold text-primary">ER</span>
+                  </div>
+                  <div className="ml-4">
+                    <h4 className="font-semibold text-gray-900">Emily R.</h4>
+                  </div>
+                </div>
+                <p className="text-gray-600">"Fibi helped me save over $5,000 in just six months!"</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <span className="text-xl font-bold text-primary">JL</span>
+                  </div>
+                  <div className="ml-4">
+                    <h4 className="font-semibold text-gray-900">Jason L.</h4>
+                  </div>
+                </div>
+                <p className="text-gray-600">"I paid off my credit card debt faster than I thought possible!"</p>
+              </div>
+
+              <div className="bg-white p-6 rounded-lg shadow-sm">
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <span className="text-xl font-bold text-primary">SK</span>
+                  </div>
+                  <div className="ml-4">
+                    <h4 className="font-semibold text-gray-900">Sarah K.</h4>
+                  </div>
+                </div>
+                <p className="text-gray-600">"The best budgeting tool I've ever used. It keeps me accountable and stress-free."</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Why FiBi Over Others Section */}
+        <section className="relative z-10 py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-6 md:px-12">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Why FiBi Over Other Budgeting Apps?</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto">
+              <div className="text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Simple & Intuitive Interface</h3>
+                <p className="text-gray-600">No complex spreadsheets, just clear insights.</p>
+              </div>
+
+              <div className="text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">No Hidden Fees</h3>
+                <p className="text-gray-600">Transparent pricing, no surprises.</p>
+              </div>
+
+              <div className="text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Security First</h3>
+                <p className="text-gray-600">Bank-level encryption to protect your data.</p>
+              </div>
+
+              <div className="text-center">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-6 h-6 text-primary" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Zero-Based Budgeting Focus</h3>
+                <p className="text-gray-600">Unlike other apps, we ensure every dollar is purposefully assigned.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section className="relative z-10 py-20 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-6 md:px-12">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
+            </div>
+
+            <div className="max-w-3xl mx-auto space-y-4">
+              {faqs.map((faq, index) => (
+                <div key={faq.question} className="bg-white rounded-lg shadow-sm overflow-hidden">
+                  <button
+                    className="w-full px-6 py-4 text-left flex justify-between items-center"
+                    onClick={() => handleFaqClick(index)}
+                  >
+                    <h3 className="text-xl font-semibold text-gray-900">{faq.question}</h3>
+                    <svg
+                      className={`w-6 h-6 text-gray-500 transform transition-transform ${
+                        activeFaq === index ? 'rotate-180' : ''
+                      }`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 9l-7 7-7-7"
+                      />
+                    </svg>
+                  </button>
+                  <div
+                    className={`transition-all duration-300 ${
+                      activeFaq === index ? 'max-h-40' : 'max-h-0'
+                    } overflow-hidden`}
+                  >
+                    <p className="px-6 pb-4 text-gray-600">{faq.answer}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="relative z-10 py-24 bg-[rgb(88,0,159)]">
+          <div className="max-w-7xl mx-auto px-6 md:px-12">
+            <div className="text-center">
+              <h2 className="text-4xl md:text-6xl font-bold text-white mb-8">
+                Ready to Transform Your Financial Future?
+              </h2>
+              <p className="text-xl text-purple-200 mb-10 max-w-2xl mx-auto">
+                Join thousands of people who have already taken control of their finances with FiBi.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link 
+                  to="/signup" 
+                  className="inline-block bg-white hover:bg-gray-100 text-[rgb(88,0,159)] px-8 py-4 rounded-md font-medium text-lg transition-colors min-w-[200px]"
+                >
+                  Start Free Trial
+                </Link>
+                <Link 
+                  to="/demo" 
+                  className="inline-block bg-transparent border-2 border-white text-white hover:bg-white/10 px-8 py-4 rounded-md font-medium text-lg transition-colors min-w-[200px]"
+                >
+                  Watch Demo
+                </Link>
+              </div>
+              <p className="text-purple-200 mt-6">No credit card required • 14-day free trial • Cancel anytime</p>
+            </div>
+          </div>
+        </section>
+      </main>
 
       {/* Footer */}
       <footer className="bg-gray-50 py-12 px-6 md:px-12 z-10">
@@ -182,7 +655,9 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             {/* Logo and social media */}
             <div className="col-span-1">
-              <Link to="/landing" className="text-3xl font-bold text-primary">FiBi.</Link>
+              <Link to="/landing">
+                <img src="/logo-default.svg" alt="FiBi" className="h-10" />
+              </Link>
               
               <div className="flex space-x-4 mt-4">
                 <a href="#" className="text-gray-500 hover:text-gray-500">

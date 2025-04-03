@@ -90,13 +90,15 @@ const Login = () => {
         <div className="absolute inset-x-0 top-1/3 bottom-0 bg-white"></div>
       </div>
 
-      {/* Logo in top-left corner */}
-      <div className="p-6 relative z-10">
-        <Link to="/landing" className="text-3xl font-bold text-white">FiBi.</Link>
+      {/* Logo centered above the form */}
+      <div className="flex justify-center p-6 relative z-10">
+        <Link to="/landing">
+          <img src="/logo-white.svg" alt="FiBi" className="h-8" />
+        </Link>
       </div>
 
       {/* Main content - Positioned more toward the top */}
-      <div className="flex-1 flex items-start justify-center px-6 lg:px-20 relative z-10 mt-16">
+      <div className="flex-1 flex items-start justify-center px-6 lg:px-20 relative z-10 mt-4">
         <div className="w-full flex flex-col items-center justify-center max-w-md mx-auto">
           {/* Login form card */}
           <div className="bg-white rounded-lg p-8 shadow-2xl w-full">
