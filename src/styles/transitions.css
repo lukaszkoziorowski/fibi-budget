@@ -1,0 +1,29 @@
+@layer utilities {
+  .transition-all {
+    @apply transition-property-all transition-duration-300 transition-timing-function-ease-in-out;
+  }
+
+  .transition-colors {
+    @apply transition-property-colors transition-duration-300 transition-timing-function-ease-in-out;
+  }
+
+  .transition-opacity {
+    @apply transition-property-opacity transition-duration-300 transition-timing-function-ease-in-out;
+  }
+
+  .transition-transform {
+    @apply transition-property-transform transition-duration-300 transition-timing-function-ease-in-out;
+  }
+
+  .transition-shadow {
+    @apply transition-property-shadow transition-duration-300 transition-timing-function-ease-in-out;
+  }
+
+  .transition-border {
+    @apply transition-property-border transition-duration-300 transition-timing-function-ease-in-out;
+  }
+
+  .transition-background {
+    @apply transition-property-background transition-duration-300 transition-timing-function-ease-in-out;
+  }
+} 

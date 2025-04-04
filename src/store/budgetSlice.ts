@@ -181,6 +181,31 @@ const budgetSlice = createSlice({
       state.globalCurrency = currentCurrency; // Keep the same currency
       saveState(state); // Save the state with preserved currency
     },
+    resetState: (state) => {
+      const defaultState = {
+        categories: [],
+        transactions: [],
+        balance: 0,
+        currentMonth: new Date().toISOString(),
+        globalCurrency: 'USD',
+        budgetName: 'My Budget',
+        currencyFormat: {
+          currency: 'USD',
+          placement: 'before' as const,
+          numberFormat: '123,456.78',
+          dateFormat: 'MM/DD/YYYY',
+        },
+      };
+      
+      // Reset all state properties
+      Object.assign(state, defaultState);
+      
+      // Clear localStorage
+      localStorage.removeItem('budgetState');
+      
+      // Save new default state
+      saveState(defaultState);
+    },
   },
 });
 
@@ -195,6 +220,7 @@ export const {
   setBudgetName,
   setCurrencyFormat,
   clearAllData,
+  resetState,
 } = budgetSlice.actions;
 
 export default budgetSlice.reducer; 
