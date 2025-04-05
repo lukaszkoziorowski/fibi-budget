@@ -18,10 +18,8 @@ export interface Category {
 export interface CurrencyFormat {
   currency: string;
   placement: 'before' | 'after';
-  numberFormat: {
-    minimumFractionDigits: number;
-    maximumFractionDigits: number;
-  };
+  numberFormat: string;
+  dateFormat: string;
 }
 
 export interface BudgetState {

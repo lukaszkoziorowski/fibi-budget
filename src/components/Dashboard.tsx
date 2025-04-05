@@ -7,7 +7,7 @@ import AddTransactionModal from '@/components/AddTransactionModal';
 import AddCategoryModal from '@/components/AddCategoryModal';
 import { format, addMonths, subMonths, parseISO } from 'date-fns';
 import { enUS } from 'date-fns/locale';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { useAuth } from '../contexts/AuthContext';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useBudgetStats } from '@/hooks/useBudgetStats';

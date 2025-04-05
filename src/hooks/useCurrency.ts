@@ -6,6 +6,7 @@ export const DEFAULT_CURRENCY_FORMAT = {
   currency: 'USD',
   placement: 'before' as const,
   numberFormat: '123,456.78',
+  dateFormat: 'MM/DD/YYYY',
 };
 
 export const useCurrency = () => {

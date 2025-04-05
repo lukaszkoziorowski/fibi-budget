@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
 import { addAccount, setActiveAccount } from '@/store/accountsSlice';
 import { BanknotesIcon, PlusIcon, ChevronDownIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency } from '@/utils/formatCurrency';
 import type { Account } from '@/store/accountsSlice';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';

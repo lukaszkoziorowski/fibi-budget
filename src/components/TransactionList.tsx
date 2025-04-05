@@ -4,7 +4,7 @@ import { RootState } from "@/store";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { updateTransaction } from "@/store/budgetSlice";
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 interface EditingState {
   id: string | null;

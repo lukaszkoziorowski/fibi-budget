@@ -1,20 +1,6 @@
-import { currencies } from './currencies';
+import { CurrencyFormat } from '@/types';
 
-interface CurrencyFormat {
-  currency: string;
-  placement: 'before' | 'after';
-  numberFormat: string;
-}
-
-const DEFAULT_CURRENCY_FORMAT: CurrencyFormat = {
-  currency: 'USD',
-  placement: 'before',
-  numberFormat: '123,456.78',
-};
-
-export const formatCurrency = (amount: number, format: CurrencyFormat = DEFAULT_CURRENCY_FORMAT): string => {
-  const currencySymbol = currencies.find(c => c.code === format.currency)?.symbol || '$';
-  
+export const formatCurrency = (amount: number, format: CurrencyFormat): string => {
   // Format the number according to the selected format
   let formattedNumber = '';
   switch (format.numberFormat) {
@@ -30,6 +16,6 @@ export const formatCurrency = (amount: number, format: CurrencyFormat = DEFAULT_
 
   // Apply currency placement
   return format.placement === 'before' 
-    ? `${currencySymbol}${formattedNumber}`
-    : `${formattedNumber}${currencySymbol}`;
+    ? `${format.currency} ${formattedNumber}`
+    : `${formattedNumber} ${format.currency}`;
 }; 

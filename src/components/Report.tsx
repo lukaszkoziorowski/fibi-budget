@@ -5,7 +5,7 @@ import { enUS } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
 import { currencies } from '@/utils/currencies';
 import { getExchangeRate } from '@/utils/currencies';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency } from '@/utils/formatCurrency';
 import {
   AreaChart,
   Area,

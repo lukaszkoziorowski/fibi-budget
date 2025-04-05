@@ -5,7 +5,7 @@ import { Fragment } from 'react';
 import { addTransaction } from '@/store/budgetSlice';
 import { RootState } from '@/store';
 import { currencies } from '@/utils/currencies';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency } from '@/utils/formatCurrency';
 
 interface AddTransactionModalProps {
   isOpen: boolean;

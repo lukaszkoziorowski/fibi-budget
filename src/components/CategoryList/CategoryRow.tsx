@@ -1,5 +1,5 @@
 import { Category } from '@/types';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { CurrencyFormat } from '@/types';
 
 interface CategoryRowProps {

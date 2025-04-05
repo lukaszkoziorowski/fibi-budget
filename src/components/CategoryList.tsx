@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { addCategory, deleteCategory, updateCategory, reorderCategories } from '@/store/budgetSlice';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency } from '@/utils/formatCurrency';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { calculateCategoryActivity, validateCategoryOperation } from '@/utils/categoryUtils';
