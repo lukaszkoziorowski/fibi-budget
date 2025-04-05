@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { auth } from '../config/firebase';
 
 export interface Category {
   id: string;
@@ -36,57 +37,54 @@ interface BudgetState {
 // Load initial state from localStorage if available
 const loadState = (): BudgetState => {
   try {
-    const serializedState = localStorage.getItem('budgetState');
+    const userId = auth.currentUser?.uid;
+    if (!userId) {
+      return getDefaultState();
+    }
+
+    const serializedState = localStorage.getItem(`budgetState_${userId}`);
     if (serializedState === null) {
       // Initialize with empty categories
-      const initialState = {
-        categories: [],
-        transactions: [],
-        balance: 0,
-        currentMonth: new Date().toISOString(),
-        globalCurrency: 'USD',
-        budgetName: 'My Budget',
-        currencyFormat: {
-          currency: 'USD',
-          placement: 'before' as const,
-          numberFormat: '123,456.78',
-          dateFormat: 'MM/DD/YYYY',
-        },
-      };
+      const initialState = getDefaultState();
       
       // Save the initial state
-      localStorage.setItem('budgetState', JSON.stringify(initialState));
+      localStorage.setItem(`budgetState_${userId}`, JSON.stringify(initialState));
       return initialState;
     }
     return JSON.parse(serializedState);
   } catch (err) {
     console.error('Error loading state from localStorage:', err);
-    return {
-      categories: [],
-      transactions: [],
-      balance: 0,
-      currentMonth: new Date().toISOString(),
-      globalCurrency: 'USD',
-      budgetName: 'My Budget',
-      currencyFormat: {
-        currency: 'USD',
-        placement: 'before' as const,
-        numberFormat: '123,456.78',
-        dateFormat: 'MM/DD/YYYY',
-      },
-    };
+    return getDefaultState();
   }
 };
 
 // Save state to localStorage
 const saveState = (state: BudgetState) => {
   try {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return;
+
     const serializedState = JSON.stringify(state);
-    localStorage.setItem('budgetState', serializedState);
+    localStorage.setItem(`budgetState_${userId}`, serializedState);
   } catch (err) {
     console.error('Error saving state to localStorage:', err);
   }
 };
+
+const getDefaultState = (): BudgetState => ({
+  categories: [],
+  transactions: [],
+  balance: 0,
+  currentMonth: new Date().toISOString(),
+  globalCurrency: 'USD',
+  budgetName: 'My Budget',
+  currencyFormat: {
+    currency: 'USD',
+    placement: 'before' as const,
+    numberFormat: '123,456.78',
+    dateFormat: 'MM/DD/YYYY',
+  },
+});
 
 const initialState: BudgetState = loadState();
 
@@ -94,6 +92,10 @@ const budgetSlice = createSlice({
   name: 'budget',
   initialState,
   reducers: {
+    loadUserData: (state) => {
+      const loadedState = loadState();
+      Object.assign(state, loadedState);
+    },
     addCategory: (state, action: PayloadAction<Category>) => {
       state.categories.push(action.payload);
       saveState(state);
@@ -186,26 +188,28 @@ const budgetSlice = createSlice({
       saveState(state);
     },
     resetState: (state) => {
-      const defaultState = {
-        categories: [],
-        transactions: [],
-        balance: 0,
-        currentMonth: new Date().toISOString(),
-        globalCurrency: 'USD',
-        budgetName: 'My Budget',
-        currencyFormat: {
-          currency: 'USD',
-          placement: 'before' as const,
-          numberFormat: '123,456.78',
-          dateFormat: 'MM/DD/YYYY',
-        },
-      };
+      const defaultState = getDefaultState();
       
       // Reset all state properties
       Object.assign(state, defaultState);
       
-      // Clear localStorage
-      localStorage.removeItem('budgetState');
+      // Don't remove data from localStorage on logout
+      // This way the data persists for the next login
+      
+      // Save new default state
+      saveState(defaultState);
+    },
+    clearUserData: (state) => {
+      const defaultState = getDefaultState();
+      
+      // Reset all state properties
+      Object.assign(state, defaultState);
+      
+      // Clear user data from localStorage
+      const userId = auth.currentUser?.uid;
+      if (userId) {
+        localStorage.removeItem(`budgetState_${userId}`);
+      }
       
       // Save new default state
       saveState(defaultState);
@@ -214,6 +218,7 @@ const budgetSlice = createSlice({
 });
 
 export const {
+  loadUserData,
   addCategory,
   updateCategory,
   deleteCategory,
@@ -226,6 +231,7 @@ export const {
   clearAllData,
   reorderCategories,
   resetState,
+  clearUserData,
 } = budgetSlice.actions;
 
 export default budgetSlice.reducer; 

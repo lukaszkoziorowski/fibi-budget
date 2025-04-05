@@ -6,7 +6,13 @@ interface CurrencyFormat {
   numberFormat: string;
 }
 
-export const formatCurrency = (amount: number, format: CurrencyFormat): string => {
+const DEFAULT_CURRENCY_FORMAT: CurrencyFormat = {
+  currency: 'USD',
+  placement: 'before',
+  numberFormat: '123,456.78',
+};
+
+export const formatCurrency = (amount: number, format: CurrencyFormat = DEFAULT_CURRENCY_FORMAT): string => {
   const currencySymbol = currencies.find(c => c.code === format.currency)?.symbol || '$';
   
   // Format the number according to the selected format

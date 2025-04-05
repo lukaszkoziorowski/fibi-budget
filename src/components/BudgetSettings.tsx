@@ -20,16 +20,38 @@ const BudgetSettings: React.FC<BudgetSettingsProps> = ({ onBack }) => {
   
   const [editingField, setEditingField] = useState<string | null>(null);
 
-  const handleApplySettings = () => {
-    dispatch(setBudgetName(localBudgetName));
-    dispatch(setGlobalCurrency(localCurrency));
-    dispatch(setCurrencyFormat({
-      currency: localCurrency,
-      placement: localCurrencyPlacement,
-      numberFormat: localNumberFormat,
-      dateFormat: localDateFormat,
-    }));
-    onBack();
+  const saveField = (field: string) => {
+    switch (field) {
+      case 'budgetName':
+        dispatch(setBudgetName(localBudgetName));
+        break;
+      case 'currency':
+        dispatch(setGlobalCurrency(localCurrency));
+        dispatch(setCurrencyFormat({
+          ...currencyFormat,
+          currency: localCurrency,
+        }));
+        break;
+      case 'currencyPlacement':
+        dispatch(setCurrencyFormat({
+          ...currencyFormat,
+          placement: localCurrencyPlacement,
+        }));
+        break;
+      case 'numberFormat':
+        dispatch(setCurrencyFormat({
+          ...currencyFormat,
+          numberFormat: localNumberFormat,
+        }));
+        break;
+      case 'dateFormat':
+        dispatch(setCurrencyFormat({
+          ...currencyFormat,
+          dateFormat: localDateFormat,
+        }));
+        break;
+    }
+    setEditingField(null);
   };
 
   const handleResetData = () => {
@@ -62,8 +84,8 @@ const BudgetSettings: React.FC<BudgetSettingsProps> = ({ onBack }) => {
     }
   };
 
-  const saveField = (field: string) => {
-    setEditingField(null);
+  const handleBack = () => {
+    onBack();
   };
 
   return (
@@ -277,21 +299,24 @@ const BudgetSettings: React.FC<BudgetSettingsProps> = ({ onBack }) => {
           </div>
         </div>
 
-        {/* Reset Data Section */}
-        <div className="border-t border-gray-200 pt-6">
+        {/* Reset Data */}
+        <div className="pt-4">
           <div className="flex items-start">
             <div className="flex-shrink-0">
               <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
             </div>
             <div className="ml-3">
               <h3 className="text-sm font-medium text-gray-900">Reset All Data</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                This will permanently delete all your categories, transactions, and budget data. This action cannot be undone.
-              </p>
+              <div className="mt-2">
+                <p className="text-sm text-gray-500">
+                  This will permanently delete all your categories, transactions, and budget settings. This action cannot be undone.
+                </p>
+              </div>
               <div className="mt-4">
                 <button
+                  type="button"
                   onClick={handleResetData}
-                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
                   Reset All Data
                 </button>
@@ -299,6 +324,16 @@ const BudgetSettings: React.FC<BudgetSettingsProps> = ({ onBack }) => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Back Button */}
+      <div className="mt-6">
+        <button
+          onClick={handleBack}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+        >
+          Back to Settings
+        </button>
       </div>
     </div>
   );

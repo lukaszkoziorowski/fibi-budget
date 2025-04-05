@@ -12,6 +12,12 @@ import { formatCurrency } from '@/utils/formatters';
 import { useAuth } from '../contexts/AuthContext';
 import { ChevronLeftIcon, ChevronRightIcon, BellIcon, ArrowTrendingUpIcon, CurrencyDollarIcon, ShoppingCartIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 
+const DEFAULT_CURRENCY_FORMAT = {
+  currency: 'USD',
+  placement: 'before' as const,
+  numberFormat: '123,456.78',
+};
+
 const Dashboard = () => {
   const dispatch = useDispatch();
   const { currentUser } = useAuth();
@@ -20,7 +26,7 @@ const Dashboard = () => {
   const [isEditingCategories, setIsEditingCategories] = useState(false);
   const [isMonthSelectorOpen, setIsMonthSelectorOpen] = useState(false);
   
-  const { balance, categories, transactions, currentMonth: currentMonthString, globalCurrency, currencyFormat } = useSelector((state: RootState) => state.budget);
+  const { balance, categories, transactions, currentMonth: currentMonthString, globalCurrency, currencyFormat = DEFAULT_CURRENCY_FORMAT } = useSelector((state: RootState) => state.budget);
   const currentMonth = parseISO(currentMonthString);
   
   const assignedTotal = categories.reduce((sum, category) => sum + category.budget, 0);

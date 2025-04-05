@@ -5,6 +5,12 @@ import { addCategory, deleteCategory, updateCategory, reorderCategories } from '
 import { getExchangeRate, currencies } from '@/utils/currencies';
 import { formatCurrency } from '@/utils/formatters';
 
+const DEFAULT_CURRENCY_FORMAT = {
+  currency: 'USD',
+  placement: 'before' as const,
+  numberFormat: '123,456.78',
+};
+
 interface CategoryListProps {
   isEditing: boolean;
 }
@@ -58,7 +64,7 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
   const categories = useSelector((state: RootState) => state.budget.categories);
   const transactions = useSelector((state: RootState) => state.budget.transactions);
   const currentMonth = useSelector((state: RootState) => state.budget.currentMonth);
-  const { globalCurrency, currencyFormat } = useSelector((state: RootState) => state.budget);
+  const { globalCurrency, currencyFormat = DEFAULT_CURRENCY_FORMAT } = useSelector((state: RootState) => state.budget);
   
   const [newCategoryName, setNewCategoryName] = useState('');
   const [selectedEmoji, setSelectedEmoji] = useState('📋');

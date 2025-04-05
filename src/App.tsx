@@ -15,7 +15,7 @@ import LandingPage from './components/LandingPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from './store';
-import { setGlobalCurrency, resetState } from './store/budgetSlice';
+import { setGlobalCurrency, resetState, loadUserData } from './store/budgetSlice';
 import { currencies } from './utils/currencies';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
@@ -55,11 +55,14 @@ const MainAppLayout = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const location = useLocation();
   const dispatch = useDispatch();
+  const { currentUser } = useAuth();
   
   useEffect(() => {
-    // Reset state on first load
-    dispatch(resetState());
-  }, [dispatch]);
+    // Load user's data when component mounts
+    if (currentUser) {
+      dispatch(loadUserData());
+    }
+  }, [dispatch, currentUser]);
   
   // Check if the current path is an account or settings page
   const isAccountPage = location.pathname.startsWith('/account/');
