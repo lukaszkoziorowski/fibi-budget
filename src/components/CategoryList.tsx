@@ -2,118 +2,53 @@ import { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { addCategory, deleteCategory, updateCategory, reorderCategories } from '@/store/budgetSlice';
-import { getExchangeRate, currencies } from '@/utils/currencies';
 import { formatCurrency } from '@/utils/formatters';
-
-const DEFAULT_CURRENCY_FORMAT = {
-  currency: 'USD',
-  placement: 'before' as const,
-  numberFormat: '123,456.78',
-};
+import { useCurrency } from '@/hooks/useCurrency';
+import { useExchangeRates } from '@/hooks/useExchangeRates';
+import { calculateCategoryActivity, validateCategoryOperation } from '@/utils/categoryUtils';
+import { emojiCategories } from '@/utils/emojiData';
+import { useBudgetStats } from '@/hooks/useBudgetStats';
+import { useModal } from '@/hooks/useModal';
 
 interface CategoryListProps {
   isEditing: boolean;
 }
 
-// Emoji categories and their emojis
-const emojiCategories = [
-  {
-    name: "Frequently Used",
-    emojis: ['📋', '💰', '🏠', '🍔', '🚗', '🛒', '💊', '👕', '🎓', '🎮', '✈️', '🎁']
-  },
-  {
-    name: "Finance",
-    emojis: ['💰', '💵', '💸', '💳', '💻', '📊', '📈', '📉', '🏦', '💎', '🧾', '💹', '🏧', '📱', '💼', '🔐', '📝', '📄']
-  },
-  {
-    name: "Home",
-    emojis: ['🏠', '🏡', '🏘️', '🏢', '🛋️', '🛏️', '🚿', '🧹', '🧺', '🧼', '🪣', '🧴', '🧽', '🪒', '🛁', '🚽', '⚡', '💡', '🪑', '🖼️']
-  },
-  {
-    name: "Food",
-    emojis: ['🍔', '🍕', '🍗', '🥩', '🍖', '🌮', '🌯', '🥗', '🥪', '🍣', '🍱', '🍛', '🍜', '🍝', '🥘', '🧆', '🥙', '🫔', '🌭', '🍟']
-  },
-  {
-    name: "Transportation",
-    emojis: ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🛻', '🚚', '🚛', '🚜', '🛵', '🏍️', '🚲', '🛴', '🚅', '✈️']
-  },
-  {
-    name: "Shopping",
-    emojis: ['🛒', '🛍️', '👜', '👚', '👕', '👖', '🧥', '👗', '👠', '👟', '👓', '🧢', '👑', '⌚', '💍', '💎', '🥾', '👔', '🩱', '🎽']
-  },
-  {
-    name: "Health",
-    emojis: ['💊', '💉', '🩺', '🩹', '🔬', '🧪', '🦷', '🧠', '👁️', '🫀', '🫁', '🦾', '🦿', '🦴', '🏥', '🏃', '🧘', '🏋️', '🚴', '🧬']
-  },
-  {
-    name: "Entertainment",
-    emojis: ['🎮', '🎬', '🎵', '🎸', '🎹', '🎤', '🎧', '🎨', '🎭', '🎪', '🎟️', '🎫', '🎯', '🎱', '🎲', '🧩', '🎰', '🎨', '📺', '📚']
-  },
-  {
-    name: "Travel",
-    emojis: ['✈️', '🚂', '🚢', '🚁', '🛳️', '🚆', '🚀', '🧳', '🏖️', '🏝️', '🏜️', '⛰️', '🏔️', '🗻', '🏕️', '🏞️', '🏙️', '🌄', '🌅', '🌃']
-  },
-  {
-    name: "Activities",
-    emojis: ['🎁', '🎉', '🎊', '🎈', '🎂', '🎄', '🎃', '🎗️', '🎟️', '🎖️', '🏆', '⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🎱', '🏓', '🥊']
-  }
-];
-
 const CategoryList = ({ isEditing }: CategoryListProps) => {
   const dispatch = useDispatch();
-  const categories = useSelector((state: RootState) => state.budget.categories);
-  const transactions = useSelector((state: RootState) => state.budget.transactions);
-  const currentMonth = useSelector((state: RootState) => state.budget.currentMonth);
-  const { globalCurrency, currencyFormat = DEFAULT_CURRENCY_FORMAT } = useSelector((state: RootState) => state.budget);
+  const { categories, transactions, currentMonth } = useSelector((state: RootState) => state.budget);
+  const { currencyFormat, currencySymbol } = useCurrency();
+  const { convertAmount } = useExchangeRates(transactions, currencyFormat.currency);
+  const { getCategoryStats } = useBudgetStats();
+  const emojiPicker = useModal();
   
+  // State management
   const [newCategoryName, setNewCategoryName] = useState('');
   const [selectedEmoji, setSelectedEmoji] = useState('📋');
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [emojiSearch, setEmojiSearch] = useState('');
   const [activeEmojiCategory, setActiveEmojiCategory] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [editingBudget, setEditingBudget] = useState('');
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(null);
 
   const emojiPickerRef = useRef<HTMLDivElement>(null);
-  const currencySymbol = currencies.find(c => c.code === globalCurrency)?.symbol || '$';
 
-  // Fetch exchange rates for all currencies used in transactions
-  useEffect(() => {
-    const fetchRates = async () => {
-      const uniqueCurrencies = new Set(transactions.map(t => t.originalCurrency || t.currency));
-      const rates: Record<string, number> = {};
-      
-      for (const currency of uniqueCurrencies) {
-        if (currency !== globalCurrency) {
-          rates[currency] = await getExchangeRate(currency, globalCurrency);
-        }
-      }
-      
-      setExchangeRates(rates);
-    };
-
-    fetchRates();
-  }, [transactions, globalCurrency]);
-
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
-        setShowEmojiPicker(false);
+        emojiPicker.closeModal();
       }
       setMenuOpenId(null);
     };
     
     document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
+  // Category operations
   const handleAddCategory = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategoryName.trim()) return;
@@ -129,7 +64,8 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
   };
 
   const handleUpdateCategory = (id: string) => {
-    if (!editingName.trim()) return;
+    if (!validateCategoryOperation.canUpdate(editingName, editingBudget)) return;
+    
     const category = categories.find((c) => c.id === id);
     if (!category) return;
     
@@ -138,40 +74,15 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
       name: editingName.trim(),
       budget: Number(editingBudget) || category.budget,
     }));
-    setEditingId(null);
-    setEditingName('');
-    setEditingBudget('');
+    resetEditingState();
   };
 
   const handleRemoveCategory = (id: string) => {
-    const hasTransactions = transactions.some((t) => t.categoryId === id);
-    if (hasTransactions) {
+    if (!validateCategoryOperation.canDelete(id, transactions)) {
       alert('Cannot delete a category that has transactions assigned to it.');
       return;
     }
     dispatch(deleteCategory(id));
-  };
-
-  const calculateCategoryActivity = (categoryId: string) => {
-    const currentMonthDate = new Date(currentMonth);
-    return transactions
-      .filter((t) => {
-        const transactionDate = new Date(t.date);
-        return t.categoryId === categoryId && 
-               t.type === 'expense' &&
-               transactionDate.getMonth() === currentMonthDate.getMonth() &&
-               transactionDate.getFullYear() === currentMonthDate.getFullYear();
-      })
-      .reduce((sum, t) => {
-        let amount = Math.abs(t.amount);
-        
-        // If the transaction has an original amount and currency
-        if (t.originalAmount && t.originalCurrency && t.originalCurrency !== globalCurrency) {
-          amount = Math.abs(t.originalAmount * (exchangeRates[t.originalCurrency] || 1));
-        }
-        
-        return sum + amount;
-      }, 0);
   };
 
   const handleStartEditing = (category: { id: string; name: string; budget: number }) => {
@@ -181,36 +92,10 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
     setMenuOpenId(null);
   };
 
-  const handleBudgetChange = (category: { id: string; name: string; budget: number }, newBudget: string) => {
-    dispatch(updateCategory({
-      ...category,
-      budget: Number(newBudget) || 0,
-    }));
-  };
-
-  const toggleMenu = (e: React.MouseEvent, categoryId: string) => {
-    e.stopPropagation(); // Prevent event bubbling
-    setMenuOpenId(menuOpenId === categoryId ? null : categoryId);
-  };
-
-  const toggleEmojiPicker = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent event bubbling
-    setShowEmojiPicker(!showEmojiPicker);
-    if (!showEmojiPicker) {
-      setEmojiSearch('');
-      setActiveEmojiCategory(0);
-    }
-  };
-
-  const selectEmoji = (emoji: string) => {
-    setSelectedEmoji(emoji);
-    setShowEmojiPicker(false);
-  };
-
+  // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, categoryId: string) => {
     setDraggedCategoryId(categoryId);
     e.dataTransfer.effectAllowed = 'move';
-    // Add some styling to the dragged element
     if (e.currentTarget instanceof HTMLElement) {
       e.currentTarget.classList.add('opacity-50');
     }
@@ -218,53 +103,34 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
 
   const handleDragEnd = (e: React.DragEvent) => {
     setDraggedCategoryId(null);
-    // Remove styling from the dragged element
     if (e.currentTarget instanceof HTMLElement) {
       e.currentTarget.classList.remove('opacity-50');
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
   const handleDrop = (e: React.DragEvent, targetCategoryId: string) => {
     e.preventDefault();
-    
     if (!draggedCategoryId || draggedCategoryId === targetCategoryId) return;
     
-    // Find the indices of the dragged and target categories
     const draggedIndex = categories.findIndex(c => c.id === draggedCategoryId);
     const targetIndex = categories.findIndex(c => c.id === targetCategoryId);
     
     if (draggedIndex === -1 || targetIndex === -1) return;
     
-    // Create a new array with the reordered categories
     const newCategories = [...categories];
     const [movedCategory] = newCategories.splice(draggedIndex, 1);
     newCategories.splice(targetIndex, 0, movedCategory);
     
-    // Dispatch the reordered categories to the store
     dispatch(reorderCategories(newCategories));
   };
 
-  const moveCategory = (categoryId: string, direction: 'up' | 'down') => {
-    const index = categories.findIndex(c => c.id === categoryId);
-    if (
-      (direction === 'up' && index === 0) || 
-      (direction === 'down' && index === categories.length - 1)
-    ) return;
-    
-    const newCategories = [...categories];
-    const [movedCategory] = newCategories.splice(index, 1);
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    newCategories.splice(newIndex, 0, movedCategory);
-    
-    dispatch(reorderCategories(newCategories));
+  // Helper functions
+  const resetEditingState = () => {
+    setEditingId(null);
+    setEditingName('');
+    setEditingBudget('');
   };
 
-  // Filter emojis based on search
   const getFilteredEmojis = () => {
     if (!emojiSearch) {
       return emojiCategories[activeEmojiCategory].emojis;
@@ -272,11 +138,60 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
     
     const searchLower = emojiSearch.toLowerCase();
     const allEmojis = emojiCategories.flatMap(cat => cat.emojis);
-    
-    return allEmojis.filter(emoji => {
-      // This is a simple filtering logic - in a real app, you'd have emoji keywords to search
-      return emoji.includes(searchLower);
-    });
+    return allEmojis.filter(emoji => emoji.includes(searchLower));
+  };
+
+  // UI Event Handlers
+  const toggleMenu = (e: React.MouseEvent, categoryId: string) => {
+    e.stopPropagation();
+    setMenuOpenId(menuOpenId === categoryId ? null : categoryId);
+  };
+
+  const toggleEmojiPicker = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    emojiPicker.toggleModal();
+    if (!emojiPicker.isOpen) {
+      setEmojiSearch('');
+      setActiveEmojiCategory(0);
+    }
+  };
+
+  const selectEmoji = (emoji: string) => {
+    setSelectedEmoji(emoji);
+    emojiPicker.closeModal();
+  };
+
+  // Category calculations
+  const getCategoryDetails = (category: { id: string; budget: number }) => {
+    const activity = calculateCategoryActivity(
+      category.id,
+      transactions,
+      currentMonth,
+      convertAmount
+    );
+    const remaining = category.budget - activity;
+    const percentUsed = category.budget > 0 ? Math.min((activity / category.budget) * 100, 100) : 0;
+
+    return {
+      activity,
+      remaining,
+      percentUsed,
+      progressClass: getProgressClass(remaining, category.budget),
+      textColorClass: getTextColorClass(remaining, category.budget)
+    };
+  };
+
+  // Style helpers
+  const getProgressClass = (remaining: number, budget: number) => {
+    if (remaining < 0) return "bg-gradient-to-r from-red-400 to-red-600";
+    if (remaining < budget * 0.2) return "bg-gradient-to-r from-yellow-400 to-yellow-600";
+    return "bg-gradient-to-r from-green-400 to-green-600";
+  };
+
+  const getTextColorClass = (remaining: number, budget: number) => {
+    if (remaining < 0) return "text-red-600 font-medium";
+    if (remaining < budget * 0.2) return "text-yellow-600 font-medium";
+    return "text-green-600 font-medium";
   };
 
   return (
@@ -306,24 +221,7 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
           <tbody className="bg-white divide-y divide-gray-100">
             {categories.map((category) => {
               const isEditing = editingId === category.id;
-              const activity = calculateCategoryActivity(category.id);
-              const remaining = category.budget - activity;
-              const percentUsed = category.budget > 0 ? Math.min((activity / category.budget) * 100, 100) : 0;
-              
-              // Determine color and classes for remaining amount
-              let progressClass = "";
-              let textColorClass = "";
-              
-              if (remaining < 0) {
-                progressClass = "bg-gradient-to-r from-red-400 to-red-600";
-                textColorClass = "text-red-600 font-medium";
-              } else if (remaining < category.budget * 0.2) {
-                progressClass = "bg-gradient-to-r from-yellow-400 to-yellow-600";
-                textColorClass = "text-yellow-600 font-medium";
-              } else {
-                progressClass = "bg-gradient-to-r from-green-400 to-green-600";
-                textColorClass = "text-green-600 font-medium";
-              }
+              const { activity, remaining, percentUsed, progressClass, textColorClass } = getCategoryDetails(category);
 
               return (
                 <tr 
@@ -332,7 +230,7 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
                   draggable={!isEditing}
                   onDragStart={e => handleDragStart(e, category.id)}
                   onDragEnd={handleDragEnd}
-                  onDragOver={handleDragOver}
+                  onDragOver={e => e.preventDefault()}
                   onDrop={e => handleDrop(e, category.id)}
                 >
                   <td className="px-3 py-5 whitespace-nowrap">
@@ -517,7 +415,7 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
                 {selectedEmoji}
               </button>
               
-              {showEmojiPicker && (
+              {emojiPicker.isOpen && (
                 <div 
                   ref={emojiPickerRef}
                   className="absolute left-0 bottom-12 bg-white rounded-md shadow-lg z-20 border border-gray-200 p-2 w-80"

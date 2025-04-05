@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
-import { setCurrentMonth, clearAllData } from '@/store/budgetSlice';
+import { setCurrentMonth } from '@/store/budgetSlice';
 import CategoryList from '@/components/CategoryList';
 import AddTransactionModal from '@/components/AddTransactionModal';
 import AddCategoryModal from '@/components/AddCategoryModal';
 import { format, addMonths, subMonths, parseISO } from 'date-fns';
 import { enUS } from 'date-fns/locale';
-import { currencies } from '@/utils/currencies';
 import { formatCurrency } from '@/utils/formatters';
 import { useAuth } from '../contexts/AuthContext';
+import { useCurrency } from '@/hooks/useCurrency';
+import { useBudgetStats } from '@/hooks/useBudgetStats';
+import { useModal } from '@/hooks/useModal';
 import { ChevronLeftIcon, ChevronRightIcon, BellIcon, ArrowTrendingUpIcon, CurrencyDollarIcon, ShoppingCartIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 
 const DEFAULT_CURRENCY_FORMAT = {
@@ -21,20 +23,16 @@ const DEFAULT_CURRENCY_FORMAT = {
 const Dashboard = () => {
   const dispatch = useDispatch();
   const { currentUser } = useAuth();
-  const [isAddTransactionModalOpen, setIsAddTransactionModalOpen] = useState(false);
-  const [isAddCategoryModalOpen, setIsAddCategoryModalOpen] = useState(false);
   const [isEditingCategories, setIsEditingCategories] = useState(false);
-  const [isMonthSelectorOpen, setIsMonthSelectorOpen] = useState(false);
   
-  const { balance, categories, transactions, currentMonth: currentMonthString, globalCurrency, currencyFormat = DEFAULT_CURRENCY_FORMAT } = useSelector((state: RootState) => state.budget);
+  const { currentMonth: currentMonthString } = useSelector((state: RootState) => state.budget);
+  const { currencyFormat } = useCurrency();
+  const { balance, assignedTotal, availableToAssign, totalTransactions, totalExpenses } = useBudgetStats();
+  
+  const addTransactionModal = useModal();
+  const addCategoryModal = useModal();
+  
   const currentMonth = parseISO(currentMonthString);
-  
-  const assignedTotal = categories.reduce((sum, category) => sum + category.budget, 0);
-  const availableToAssign = balance - assignedTotal;
-
-  // Calculate total transactions count
-  const totalTransactions = transactions.length;
-  const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
   const handlePreviousMonth = () => {
     dispatch(setCurrentMonth(subMonths(currentMonth, 1).toISOString()));
@@ -119,10 +117,10 @@ const Dashboard = () => {
         </div>
 
         {/* Action Buttons and Month Selector */}
-        <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-8">
           {/* Month Selector */}
           <div className="flex items-center gap-2 bg-white rounded-lg shadow-sm border border-gray-200 px-2">
-            <button 
+            <button
               onClick={handlePreviousMonth}
               className="p-2 text-gray-500 hover:text-purple-600 transition-colors"
               aria-label="Previous month"
@@ -132,45 +130,45 @@ const Dashboard = () => {
             <span className="font-medium text-gray-700 px-2">
               {format(currentMonth, 'MMMM yyyy', { locale: enUS })}
             </span>
-            <button 
+                  <button
               onClick={handleNextMonth}
               className="p-2 text-gray-500 hover:text-purple-600 transition-colors"
               aria-label="Next month"
             >
               <ChevronRightIcon className="w-5 h-5" />
-            </button>
-          </div>
+          </button>
+        </div>
 
           {/* Action Buttons */}
           <div className="flex gap-3">
-            <button
-              onClick={() => setIsAddCategoryModalOpen(true)}
+          <button
+              onClick={() => addCategoryModal.openModal()}
               className="inline-flex items-center px-4 py-2 border border-[rgb(88,0,159)] text-sm font-medium rounded-lg shadow-sm text-[rgb(88,0,159)] hover:bg-purple-50"
-            >
+          >
               Add Category
-            </button>
-            <button
-              onClick={() => setIsAddTransactionModalOpen(true)}
+          </button>
+          <button
+            onClick={() => addTransactionModal.openModal()}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-[rgb(88,0,159)] hover:bg-[rgb(73,0,132)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[rgb(88,0,159)] transition-all"
-            >
-              Add Transaction
-            </button>
-          </div>
+          >
+            Add Transaction
+          </button>
         </div>
+      </div>
 
-        {/* Main Content */}
-        <CategoryList isEditing={isEditingCategories} />
+      {/* Main Content */}
+      <CategoryList isEditing={isEditingCategories} />
 
-        {/* Add Transaction Modal */}
-        <AddTransactionModal
-          isOpen={isAddTransactionModalOpen}
-          onClose={() => setIsAddTransactionModalOpen(false)}
-        />
+      {/* Add Transaction Modal */}
+      <AddTransactionModal
+        isOpen={addTransactionModal.isOpen}
+        onClose={addTransactionModal.closeModal}
+      />
 
         {/* Add Category Modal */}
         <AddCategoryModal
-          isOpen={isAddCategoryModalOpen}
-          onClose={() => setIsAddCategoryModalOpen(false)}
+          isOpen={addCategoryModal.isOpen}
+          onClose={addCategoryModal.closeModal}
         />
       </main>
     </div>

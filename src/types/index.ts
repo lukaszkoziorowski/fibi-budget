@@ -1,25 +1,36 @@
 export interface Transaction {
   id: string;
-  date: string;
   amount: number;
-  description: string;
   categoryId: string;
+  date: string;
+  description: string;
   type: 'income' | 'expense';
+  currency: string;
 }
 
 export interface Category {
   id: string;
   name: string;
-  budgeted: number;
-  spent: number;
-  available: number;
-  color: string;
+  budget: number;
+  color?: string;
+}
+
+export interface CurrencyFormat {
+  currency: string;
+  placement: 'before' | 'after';
+  numberFormat: {
+    minimumFractionDigits: number;
+    maximumFractionDigits: number;
+  };
 }
 
 export interface BudgetState {
-  available: number;
+  balance: number;
   categories: Category[];
   transactions: Transaction[];
+  currentMonth: string;
+  globalCurrency: string;
+  currencyFormat: CurrencyFormat;
 }
 
 export interface RootState {
