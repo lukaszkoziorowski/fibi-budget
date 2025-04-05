@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { XMarkIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, ArrowLeftIcon, LockClosedIcon, PencilIcon, EyeIcon, UserIcon, ShieldCheckIcon, KeyIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { signOut } from 'firebase/auth';
@@ -11,6 +11,7 @@ const AccountSettings = () => {
   const navigate = useNavigate();
   const [isShowingPassword, setIsShowingPassword] = useState(false);
   const [password, setPassword] = useState('');
+  const [activeSection, setActiveSection] = useState<'login' | 'security' | 'personal'>('login');
 
   const handleLogout = async () => {
     try {
@@ -28,139 +29,246 @@ const AccountSettings = () => {
     setIsShowingPassword(false);
   };
 
-  return (
-    <div className="w-full max-w-3xl mx-auto">
-      {/* Header with back button */}
-      <div className="flex items-center justify-between mb-6">
-        <Link to="/" className="flex items-center text-primary hover:text-primary-dark">
-          <svg className="w-5 h-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
-          </svg>
-          <span>Back to Budget</span>
-        </Link>
-        <button onClick={() => navigate('/')} className="p-1 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100">
-          <XMarkIcon className="w-6 h-6" />
-        </button>
-      </div>
-
-      <h1 className="text-3xl font-bold mb-8">Account Settings</h1>
-
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 mb-6">
-        <div className="flex items-center justify-between pb-4 border-b border-gray-200">
-          <div>
-            <p className="text-gray-500">{currentUser?.email}</p>
-            <a href="#" className="text-primary text-sm hover:underline" onClick={() => handleLogout()}>Log Out</a>
-          </div>
-        </div>
-      </div>
-
-      {/* Login Methods Section */}
-      <h2 className="text-xl font-semibold mb-4">Login Methods</h2>
-
-      {/* Password Section */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 mb-6">
-        <div className="mb-4">
-          <h3 className="text-lg font-medium mb-2">Set a Password</h3>
-          <p className="text-gray-500 text-sm">
-            Optionally set a password to enable an additional login method, or to edit your account email.
-          </p>
-        </div>
-
-        {isShowingPassword ? (
-          <div className="mt-4">
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <p className="text-gray-500">{currentUser?.email}</p>
+  const renderContent = () => {
+    switch(activeSection) {
+      case 'login':
+        return (
+          <div className="space-y-8">
+            <div className="border-b border-gray-200 pb-5">
+              <h2 className="text-2xl font-semibold">Login Methods</h2>
+              <p className="text-gray-500 mt-1">Manage your login methods and password</p>
             </div>
-            <div className="mb-4">
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <input
-                type="password"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-                placeholder="Enter new password"
-              />
-            </div>
-            <div className="flex gap-2 mt-4">
-              <button 
-                onClick={handleSetPassword}
-                className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary-dark transition-colors"
-              >
-                Set Password
-              </button>
-              <button 
-                onClick={() => setIsShowingPassword(false)}
-                className="border border-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button 
-            onClick={() => setIsShowingPassword(true)}
-            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-200 transition-colors"
-          >
-            Set Password
-          </button>
-        )}
-      </div>
 
-      {/* Google Connection */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
-              <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" fill="currentColor"/>
-            </svg>
+            {/* Email Section */}
+            <div className="border-b border-gray-200 pb-8">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-medium mb-1">Email</h3>
+                  <p className="text-gray-500 text-sm mb-1">{currentUser?.email}</p>
+                  <p className="text-gray-500 text-sm">Use this email to log in to your account</p>
+                </div>
+                <button className="text-primary hover:underline">Update</button>
+              </div>
+            </div>
+
+            {/* Google Connection */}
+            <div className="border-b border-gray-200 pb-8">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-medium mb-1">Google</h3>
+                  <p className="text-gray-500 text-sm">
+                    Connected as {currentUser?.displayName || currentUser?.email}
+                  </p>
+                </div>
+                <button className="text-primary hover:underline">Disconnect</button>
+              </div>
+            </div>
+
+            {/* Password Section */}
             <div>
-              <h3 className="font-medium">Google</h3>
-              <p className="text-sm text-gray-500">{currentUser?.displayName || currentUser?.email}</p>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-medium mb-1">Password</h3>
+                  <p className="text-gray-500 text-sm">
+                    {isShowingPassword 
+                      ? "Set a password to secure your account" 
+                      : "Add a password for additional security"}
+                  </p>
+                </div>
+                <button 
+                  onClick={() => setIsShowingPassword(!isShowingPassword)}
+                  className="text-primary hover:underline"
+                >
+                  {isShowingPassword ? "Cancel" : "Set up"}
+                </button>
+              </div>
+
+              {isShowingPassword && (
+                <div className="mt-4 max-w-lg">
+                  <div className="mb-4">
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">New password</label>
+                    <input
+                      type="password"
+                      id="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                      placeholder="Enter new password"
+                    />
+                  </div>
+                  <button 
+                    onClick={handleSetPassword}
+                    className="bg-primary text-white px-6 py-2 rounded-md hover:bg-primary-dark transition-colors"
+                  >
+                    Save password
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-          <button className="text-primary text-sm hover:underline">Disconnect</button>
-        </div>
-      </div>
+        );
+      
+      case 'security':
+        return (
+          <div className="space-y-8">
+            <div className="border-b border-gray-200 pb-5">
+              <h2 className="text-2xl font-semibold">Account Security</h2>
+              <p className="text-gray-500 mt-1">Manage your security settings and two-step verification</p>
+            </div>
 
-      {/* Apple Option */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center">
-            <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
-              <path d="M12 2C6.477 2 2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.879V14.89h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.989C18.343 21.129 22 16.99 22 12c0-5.523-4.477-10-10-10z" fill="currentColor"/>
-            </svg>
-            <h3 className="font-medium">Apple</h3>
+            {/* Two-Step Verification */}
+            <div className="border-b border-gray-200 pb-8">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-medium mb-1">Two-step verification</h3>
+                  <p className="text-gray-500 text-sm">Add an extra layer of security to your account</p>
+                </div>
+                <button className="text-primary hover:underline">Set up</button>
+              </div>
+            </div>
+
+            {/* Login activity */}
+            <div className="border-b border-gray-200 pb-8">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-medium mb-1">Login activity</h3>
+                  <p className="text-gray-500 text-sm">View your recent login activity</p>
+                </div>
+                <button className="text-primary hover:underline">View</button>
+              </div>
+            </div>
           </div>
-          <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors">Connect</button>
-        </div>
-      </div>
+        );
+      
+      case 'personal':
+      default:
+        return (
+          <div className="space-y-8">
+            <div className="border-b border-gray-200 pb-5">
+              <h2 className="text-2xl font-semibold">Personal Information</h2>
+              <p className="text-gray-500 mt-1">Update your personal details and preferences</p>
+            </div>
 
-      {/* Two-Step Verification */}
-      <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-medium">Two-Step Verification</h3>
-            <p className="text-sm text-gray-500">
-              Increase your login security by adding a second method of login.
-              <a href="#" className="text-primary ml-1 hover:underline">Learn more</a>
-            </p>
+            {/* Profile info */}
+            <div className="border-b border-gray-200 pb-8">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-medium mb-1">Name</h3>
+                  <p className="text-gray-500 text-sm">
+                    {currentUser?.displayName || "Not provided"}
+                  </p>
+                </div>
+                <button className="text-primary hover:underline">Edit</button>
+              </div>
+            </div>
+
+            {/* Email address */}
+            <div className="border-b border-gray-200 pb-8">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-medium mb-1">Email</h3>
+                  <p className="text-gray-500 text-sm">{currentUser?.email}</p>
+                </div>
+                <button className="text-primary hover:underline">Edit</button>
+              </div>
+            </div>
+
+            {/* Contact info */}
+            <div>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-lg font-medium mb-1">Phone number</h3>
+                  <p className="text-gray-500 text-sm">Not provided</p>
+                </div>
+                <button className="text-primary hover:underline">Add</button>
+              </div>
+            </div>
           </div>
-          <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium hover:bg-gray-50 transition-colors">Set Up</button>
-        </div>
-      </div>
+        );
+    }
+  };
 
-      {/* Footer section with links */}
-      <div className="py-4 border-t border-gray-200 mt-6">
-        <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-          <a href="#" className="hover:text-gray-700">Terms of Service</a>
-          <a href="#" className="hover:text-gray-700">Privacy Policy</a>
-          <a href="#" className="hover:text-gray-700">Your Privacy Choices</a>
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-16 pt-4">
+        {/* Breadcrumb navigation */}
+        <div className="mb-4">
+          <div className="flex items-center text-gray-600 text-sm py-4">
+            <span className="cursor-pointer hover:text-gray-800" onClick={() => navigate('/settings')}>Settings</span>
+            <span className="mx-2">›</span>
+            <span className="font-medium text-gray-800">Account Settings</span>
+          </div>
         </div>
-        <p className="text-sm text-gray-500 mt-2">
-          © Copyright 2024 FiBi LLC. All rights reserved.
-        </p>
+
+        <div className="flex flex-col md:flex-row gap-8">
+          {/* Sidebar */}
+          <div className="md:w-64 flex-shrink-0">
+            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+              <div className="p-4 border-b border-gray-200">
+                <div className="flex items-center space-x-3">
+                  <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                    <UserIcon className="h-6 w-6 text-gray-500" />
+                  </div>
+                  <div>
+                    <p className="font-medium">{currentUser?.displayName || 'User'}</p>
+                    <p className="text-sm text-gray-500 truncate">{currentUser?.email}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <nav className="py-2">
+                <ul>
+                  <li>
+                    <button 
+                      onClick={() => setActiveSection('personal')}
+                      className={`w-full text-left px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 
+                        ${activeSection === 'personal' ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-700'}`}
+                    >
+                      <UserIcon className={`h-5 w-5 ${activeSection === 'personal' ? 'text-purple-700' : 'text-gray-500'}`} />
+                      <span>Personal info</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => setActiveSection('login')}
+                      className={`w-full text-left px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 
+                        ${activeSection === 'login' ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-700'}`}
+                    >
+                      <KeyIcon className={`h-5 w-5 ${activeSection === 'login' ? 'text-purple-700' : 'text-gray-500'}`} />
+                      <span>Login & authentication</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button 
+                      onClick={() => setActiveSection('security')}
+                      className={`w-full text-left px-4 py-3 flex items-center space-x-3 hover:bg-gray-50 
+                        ${activeSection === 'security' ? 'bg-purple-50 text-purple-700 font-medium' : 'text-gray-700'}`}
+                    >
+                      <ShieldCheckIcon className={`h-5 w-5 ${activeSection === 'security' ? 'text-purple-700' : 'text-gray-500'}`} />
+                      <span>Security</span>
+                    </button>
+                  </li>
+                </ul>
+              </nav>
+              
+              <div className="p-4 border-t border-gray-200">
+                <button 
+                  onClick={handleLogout}
+                  className="w-full text-left text-primary text-sm hover:underline"
+                >
+                  Log out
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Main content */}
+          <div className="flex-1">
+            <div className="bg-white rounded-lg border border-gray-200 p-6 md:p-8">
+              {renderContent()}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

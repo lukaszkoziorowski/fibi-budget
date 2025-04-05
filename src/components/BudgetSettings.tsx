@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
-import { setBudgetName, setCurrencyFormat, setGlobalCurrency } from '@/store/budgetSlice';
+import { setBudgetName, setCurrencyFormat, setGlobalCurrency, clearAllData } from '@/store/budgetSlice';
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 
 interface BudgetSettingsProps {
   onBack: () => void;
@@ -29,6 +30,13 @@ const BudgetSettings: React.FC<BudgetSettingsProps> = ({ onBack }) => {
       dateFormat: localDateFormat,
     }));
     onBack();
+  };
+
+  const handleResetData = () => {
+    if (window.confirm('Are you sure you want to reset all data? This action cannot be undone.')) {
+      dispatch(clearAllData());
+      onBack();
+    }
   };
 
   const getCurrencyLabel = (code: string) => {
@@ -266,6 +274,29 @@ const BudgetSettings: React.FC<BudgetSettingsProps> = ({ onBack }) => {
                 Edit
               </button>
             )}
+          </div>
+        </div>
+
+        {/* Reset Data Section */}
+        <div className="border-t border-gray-200 pt-6">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-gray-900">Reset All Data</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                This will permanently delete all your categories, transactions, and budget data. This action cannot be undone.
+              </p>
+              <div className="mt-4">
+                <button
+                  onClick={handleResetData}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                >
+                  Reset All Data
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

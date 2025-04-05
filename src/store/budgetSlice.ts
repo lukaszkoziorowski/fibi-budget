@@ -181,6 +181,10 @@ const budgetSlice = createSlice({
       state.globalCurrency = currentCurrency; // Keep the same currency
       saveState(state); // Save the state with preserved currency
     },
+    reorderCategories: (state, action: PayloadAction<Category[]>) => {
+      state.categories = action.payload;
+      saveState(state);
+    },
   },
 });
 
@@ -195,6 +199,7 @@ export const {
   setBudgetName,
   setCurrencyFormat,
   clearAllData,
+  reorderCategories
 } = budgetSlice.actions;
 
 export default budgetSlice.reducer; 

@@ -16,9 +16,11 @@ import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  BanknotesIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
+import AccountsDropdown from './AccountsDropdown';
 
 interface NavigationProps {
   isCollapsed: boolean;
@@ -133,6 +135,12 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
           </div>
 
           <div className="space-y-4">
+            {/* Accounts Dropdown for Mobile */}
+            <div className="pt-2 pb-1 border-t border-b border-gray-100">
+              <h3 className="text-sm font-medium text-gray-500 mb-2 px-3">Accounts</h3>
+              <AccountsDropdown isCollapsed={false} />
+            </div>
+
             <button
               onClick={() => navigate('/settings')}
               className="flex items-center w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
@@ -202,6 +210,11 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
                     );
                   })}
                 </div>
+              </div>
+
+              {/* Accounts Dropdown for Desktop */}
+              <div className="mt-4 mb-2">
+                <AccountsDropdown isCollapsed={isCollapsed} />
               </div>
             </div>
           </div>

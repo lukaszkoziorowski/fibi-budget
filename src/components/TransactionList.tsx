@@ -74,27 +74,27 @@ const TransactionList = () => {
   };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-secondary">
-        <thead className="bg-background">
+    <div className="overflow-x-auto rounded-xl shadow-md bg-white border border-gray-100">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
           <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Date
             </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Description
             </th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-content-secondary uppercase tracking-wider">
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Category
             </th>
-            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-content-secondary uppercase tracking-wider">
+            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
               Amount
             </th>
           </tr>
         </thead>
-        <tbody className="bg-background divide-y divide-secondary">
+        <tbody className="bg-white divide-y divide-gray-200">
           {transactions.map((transaction) => (
-            <tr key={transaction.id}>
+            <tr key={transaction.id} className="hover:bg-gray-50 transition-colors duration-150">
               <td className="px-6 py-4 whitespace-nowrap">
                 {editing.id === transaction.id && editing.field === 'date' ? (
                   <input
@@ -103,14 +103,17 @@ const TransactionList = () => {
                     onChange={(e) => setEditValue(e.target.value)}
                     onBlur={() => handleSave(transaction)}
                     onKeyDown={(e) => handleKeyPress(e, transaction)}
-                    className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                     autoFocus
                   />
                 ) : (
                   <button
                     onClick={() => handleEdit(transaction, 'date')}
-                    className="text-sm text-content-primary hover:opacity-75"
+                    className="text-sm text-gray-700 hover:text-purple-600 transition-colors flex items-center"
                   >
+                    <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
                     {format(new Date(transaction.date), 'MMM d, yyyy', { locale: enUS })}
                   </button>
                 )}
@@ -123,14 +126,17 @@ const TransactionList = () => {
                     onChange={(e) => setEditValue(e.target.value)}
                     onBlur={() => handleSave(transaction)}
                     onKeyDown={(e) => handleKeyPress(e, transaction)}
-                    className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                     autoFocus
                   />
                 ) : (
                   <button
                     onClick={() => handleEdit(transaction, 'description')}
-                    className="text-sm text-content-primary hover:opacity-75"
+                    className="text-sm text-gray-700 hover:text-purple-600 transition-colors flex items-center"
                   >
+                    <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    </svg>
                     {transaction.description}
                   </button>
                 )}
@@ -141,7 +147,7 @@ const TransactionList = () => {
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
                     onBlur={() => handleSave(transaction)}
-                    className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
                     autoFocus
                   >
                     {categories.map((category) => (
@@ -153,14 +159,17 @@ const TransactionList = () => {
                 ) : (
                   <button
                     onClick={() => handleEdit(transaction, 'categoryId')}
-                    className="text-sm text-content-secondary hover:opacity-75"
+                    className="text-sm text-gray-600 hover:text-purple-600 transition-colors flex items-center"
                   >
+                    <svg className="w-4 h-4 mr-1 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
                     {categories.find((c) => c.id === transaction.categoryId)?.name}
                   </button>
                 )}
               </td>
               <td className={`px-6 py-4 whitespace-nowrap text-sm text-right font-medium ${
-                transaction.type === "income" ? "text-green-600" : "text-red-600"
+                transaction.type === "income" ? "text-green-600" : "text-red-500"
               }`}>
                 {editing.id === transaction.id && editing.field === 'amount' ? (
                   <input
@@ -169,15 +178,22 @@ const TransactionList = () => {
                     onChange={(e) => setEditValue(e.target.value)}
                     onBlur={() => handleSave(transaction)}
                     onKeyDown={(e) => handleKeyPress(e, transaction)}
-                    className="w-full px-2 py-1 border rounded focus:outline-none focus:ring-2 focus:ring-primary text-right"
+                    className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent text-right"
                     step="0.01"
                     autoFocus
                   />
                 ) : (
                   <button
                     onClick={() => handleEdit(transaction, 'amount')}
-                    className="hover:opacity-75 w-full text-right"
+                    className="hover:opacity-75 w-full text-right flex items-center justify-end"
                   >
+                    <svg className={`w-4 h-4 mr-1 ${transaction.type === "income" ? "text-green-500" : "text-red-500"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      {transaction.type === "income" ? (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
+                      ) : (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" />
+                      )}
+                    </svg>
                     {transaction.type === "income" ? "+" : "-"}
                     {formatCurrency(Math.abs(transaction.amount), currencyFormat)}
                   </button>

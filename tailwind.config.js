@@ -36,6 +36,10 @@ module.exports = {
         'blink': {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0' },
+        },
+        'fadeIn': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
         }
       },
       animation: {
@@ -43,6 +47,7 @@ module.exports = {
         'float-medium': 'float-diagonal 4s ease-in-out infinite',
         'float-fast': 'float-horizontal 3s ease-in-out infinite',
         'blink': 'blink 1s ease-in-out infinite',
+        'fadeIn': 'fadeIn 0.3s ease-in-out',
       }
     },
   },
