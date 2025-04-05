@@ -7,8 +7,8 @@ export interface Account {
   type: 'checking' | 'savings' | 'credit' | 'investment' | 'cash';
   balance: number;
   currency: string;
-  color?: string;
-  isHidden?: boolean;
+  color: string;
+  isHidden: boolean;
   createdAt: string;
 }
 
@@ -68,6 +68,9 @@ const accountsSlice = createSlice({
         createdAt: new Date().toISOString(),
       };
       state.accounts.push(newAccount);
+      if (!state.activeAccountId) {
+        state.activeAccountId = newAccount.id;
+      }
       saveState(state);
     },
     updateAccount: (state, action: PayloadAction<Partial<Account> & { id: string }>) => {
@@ -80,7 +83,7 @@ const accountsSlice = createSlice({
     deleteAccount: (state, action: PayloadAction<string>) => {
       state.accounts = state.accounts.filter(a => a.id !== action.payload);
       if (state.activeAccountId === action.payload) {
-        state.activeAccountId = state.accounts.length > 0 ? state.accounts[0].id : null;
+        state.activeAccountId = state.accounts[0]?.id || null;
       }
       saveState(state);
     },

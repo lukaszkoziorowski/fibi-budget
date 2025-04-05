@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
 import Navigation from '@/components/Navigation';
@@ -12,8 +12,12 @@ import AccountSettings from './components/AccountSettings';
 import AccountConnections from './components/AccountConnections';
 import Settings from './components/Settings';
 import LandingPage from './components/LandingPage';
-import { AuthProvider } from './contexts/AuthContext';
-import { useAuth } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from './store';
+import { setGlobalCurrency, resetState } from './store/budgetSlice';
+import { currencies } from './utils/currencies';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 // PrivateRoute component
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
@@ -50,6 +54,12 @@ const MainAppLayout = () => {
   const [isNavCollapsed, setIsNavCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const location = useLocation();
+  const dispatch = useDispatch();
+  
+  useEffect(() => {
+    // Reset state on first load
+    dispatch(resetState());
+  }, [dispatch]);
   
   // Check if the current path is an account or settings page
   const isAccountPage = location.pathname.startsWith('/account/');
@@ -94,47 +104,22 @@ const MainAppLayout = () => {
   );
 };
 
-function App() {
+// Main App component
+const App = () => {
   return (
-    <Provider store={store}>
-      <AuthProvider>
+    <AuthProvider>
+      <Provider store={store}>
         <Router>
           <Routes>
-            {/* Landing page - public */}
             <Route path="/landing" element={<LandingPage />} />
-            
-            {/* Auth pages - full screen */}
-            <Route
-              path="/login"
-              element={
-                <PublicRoute>
-                  <Login />
-                </PublicRoute>
-              }
-            />
-            <Route
-              path="/signup"
-              element={
-                <PublicRoute>
-                  <SignUp />
-                </PublicRoute>
-              }
-            />
-            
-            {/* Main app layout */}
-            <Route
-              path="/*"
-              element={
-                <PrivateRoute>
-                  <MainAppLayout />
-                </PrivateRoute>
-              }
-            />
+            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/signup" element={<PublicRoute><SignUp /></PublicRoute>} />
+            <Route path="/*" element={<PrivateRoute><MainAppLayout /></PrivateRoute>} />
           </Routes>
         </Router>
-      </AuthProvider>
-    </Provider>
+      </Provider>
+    </AuthProvider>
   );
-}
+};
 
 export default App;

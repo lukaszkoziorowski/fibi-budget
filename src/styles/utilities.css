@@ -1,0 +1,80 @@
+@layer utilities {
+  /* Flexbox utilities */
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+
+  .flex-between {
+    @apply flex items-center justify-between;
+  }
+
+  .flex-start {
+    @apply flex items-center justify-start;
+  }
+
+  .flex-end {
+    @apply flex items-center justify-end;
+  }
+
+  /* Spacing utilities */
+  .space-x-2 {
+    @apply space-x-0.5;
+  }
+
+  .space-x-4 {
+    @apply space-x-1;
+  }
+
+  .space-x-6 {
+    @apply space-x-1.5;
+  }
+
+  .space-y-2 {
+    @apply space-y-0.5;
+  }
+
+  .space-y-4 {
+    @apply space-y-1;
+  }
+
+  .space-y-6 {
+    @apply space-y-1.5;
+  }
+
+  /* Text utilities */
+  .text-truncate {
+    @apply overflow-hidden text-ellipsis whitespace-nowrap;
+  }
+
+  .text-clamp-2 {
+    @apply line-clamp-2;
+  }
+
+  .text-clamp-3 {
+    @apply line-clamp-3;
+  }
+
+  /* Background utilities */
+  .bg-gradient-primary {
+    @apply bg-gradient-to-r from-primary to-primary-dark;
+  }
+
+  .bg-gradient-secondary {
+    @apply bg-gradient-to-r from-secondary to-secondary-dark;
+  }
+
+  /* Shadow utilities */
+  .shadow-hover {
+    @apply transition-shadow duration-300 hover:shadow-md;
+  }
+
+  /* Border utilities */
+  .border-hover {
+    @apply transition-colors duration-300 hover:border-primary;
+  }
+
+  /* Opacity utilities */
+  .opacity-hover {
+    @apply transition-opacity duration-300 hover:opacity-80;
+  }
+} 

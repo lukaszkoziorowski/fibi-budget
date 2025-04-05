@@ -1,0 +1,160 @@
+@layer utilities {
+  /* Border radius utilities */
+  .rounded-none {
+    @apply border-radius-0;
+  }
+
+  .rounded-sm {
+    @apply border-radius-0.125rem;
+  }
+
+  .rounded {
+    @apply border-radius-0.25rem;
+  }
+
+  .rounded-md {
+    @apply border-radius-0.375rem;
+  }
+
+  .rounded-lg {
+    @apply border-radius-0.5rem;
+  }
+
+  .rounded-xl {
+    @apply border-radius-0.75rem;
+  }
+
+  .rounded-2xl {
+    @apply border-radius-1rem;
+  }
+
+  .rounded-3xl {
+    @apply border-radius-1.5rem;
+  }
+
+  .rounded-full {
+    @apply border-radius-9999px;
+  }
+
+  /* Border width utilities */
+  .border-0 {
+    @apply border-width-0;
+  }
+
+  .border {
+    @apply border-width-1px;
+  }
+
+  .border-2 {
+    @apply border-width-2px;
+  }
+
+  .border-4 {
+    @apply border-width-4px;
+  }
+
+  .border-8 {
+    @apply border-width-8px;
+  }
+
+  /* Border style utilities */
+  .border-solid {
+    @apply border-style-solid;
+  }
+
+  .border-dashed {
+    @apply border-style-dashed;
+  }
+
+  .border-dotted {
+    @apply border-style-dotted;
+  }
+
+  /* Border color utilities */
+  .border-primary {
+    @apply border-[rgb(var(--color-primary))];
+  }
+
+  .border-primary-dark {
+    @apply border-[rgb(var(--color-primary-dark))];
+  }
+
+  .border-primary-light {
+    @apply border-[rgb(var(--color-primary-light))];
+  }
+
+  .border-secondary {
+    @apply border-[rgb(var(--color-secondary))];
+  }
+
+  .border-secondary-dark {
+    @apply border-[rgb(var(--color-secondary-dark))];
+  }
+
+  .border-secondary-light {
+    @apply border-[rgb(var(--color-secondary-light))];
+  }
+
+  .border-background {
+    @apply border-[rgb(var(--color-background))];
+  }
+
+  .border-background-dark {
+    @apply border-[rgb(var(--color-background-dark))];
+  }
+
+  .border-background-light {
+    @apply border-[rgb(var(--color-background-light))];
+  }
+
+  /* Border position utilities */
+  .border-t {
+    @apply border-top-width-1px;
+  }
+
+  .border-r {
+    @apply border-right-width-1px;
+  }
+
+  .border-b {
+    @apply border-bottom-width-1px;
+  }
+
+  .border-l {
+    @apply border-left-width-1px;
+  }
+
+  /* Border radius position utilities */
+  .rounded-t {
+    @apply border-top-left-radius-0.25rem border-top-right-radius-0.25rem;
+  }
+
+  .rounded-r {
+    @apply border-top-right-radius-0.25rem border-bottom-right-radius-0.25rem;
+  }
+
+  .rounded-b {
+    @apply border-bottom-left-radius-0.25rem border-bottom-right-radius-0.25rem;
+  }
+
+  .rounded-l {
+    @apply border-top-left-radius-0.25rem border-bottom-left-radius-0.25rem;
+  }
+
+  /* Border radius corner utilities */
+  .rounded-tl {
+    @apply border-top-left-radius-0.25rem;
+  }
+
+  .rounded-tr {
+    @apply border-top-right-radius-0.25rem;
+  }
+
+  .rounded-br {
+    @apply border-bottom-right-radius-0.25rem;
+  }
+
+  .rounded-bl {
+    @apply border-bottom-left-radius-0.25rem;
+  }
+} 
