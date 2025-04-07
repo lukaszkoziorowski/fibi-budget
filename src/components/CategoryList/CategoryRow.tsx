@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { Category } from '@/types';
-import { formatCurrency } from '@/utils/formatters';
 import { CurrencyFormat } from '@/types';
+import { formatCurrency } from '@/utils/formatters';
 
 interface CategoryRowProps {
   category: Category;
@@ -19,12 +20,10 @@ interface CategoryRowProps {
   onDragEnd: (e: React.DragEvent) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: (e: React.DragEvent) => void;
-  onEditingNameChange: (value: string) => void;
-  onEditingBudgetChange: (value: string) => void;
+  onEditingNameChange: (name: string) => void;
+  onEditingBudgetChange: (budget: string) => void;
   onUpdate: () => void;
   onCancelEdit: () => void;
-  onToggleMenu: (e: React.MouseEvent) => void;
-  onStartEditing: () => void;
   onDelete: () => void;
 }
 
@@ -49,169 +48,127 @@ export const CategoryRow = ({
   onEditingBudgetChange,
   onUpdate,
   onCancelEdit,
-  onToggleMenu,
-  onStartEditing,
-  onDelete,
+  onDelete
 }: CategoryRowProps) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const handleMenuClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete();
+  };
+
   return (
-    <tr 
-      className={`hover:bg-gray-50 ${isEditing ? 'bg-gray-50' : 'transition-colors'}`}
-      draggable={!isEditing}
+    <tr
+      draggable
       onDragStart={onDragStart}
       onDragEnd={onDragEnd}
       onDragOver={onDragOver}
       onDrop={onDrop}
+      className="hover:bg-gray-50"
     >
-      <td className="px-3 py-5 whitespace-nowrap">
-        {!isEditing && (
-          <div className="flex justify-center">
-            <button 
-              className="p-1 text-gray-400 cursor-grab active:cursor-grabbing hover:text-gray-600 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-              </svg>
-            </button>
-          </div>
-        )}
-      </td>
-      <td className="px-6 py-5 whitespace-nowrap">
-        {isEditing ? (
-          <div className="flex items-center">
-            <input
-              type="text"
-              value={editingName}
-              onChange={(e) => onEditingNameChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[rgb(88,0,159)] focus:border-[rgb(88,0,159)] transition-colors"
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  onUpdate();
-                }
-              }}
-              autoFocus
+      <td className="px-3 py-4 whitespace-nowrap">
+        <div className="flex items-center justify-center">
+          <svg
+            className="h-5 w-5 text-gray-400 cursor-move"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
             />
-          </div>
-        ) : (
-          <div className="text-sm font-medium text-gray-800">
-            {category.name}
-          </div>
-        )}
+          </svg>
+        </div>
       </td>
-      <td className="px-6 py-5 whitespace-nowrap">
+      <td className="px-6 py-4 whitespace-nowrap">
         {isEditing ? (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">{currencySymbol}</span>
-            <input
-              type="number"
-              value={editingBudget}
-              onChange={(e) => onEditingBudgetChange(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[rgb(88,0,159)] focus:border-[rgb(88,0,159)] transition-colors"
-              step="0.01"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  onUpdate();
-                }
-              }}
-            />
-          </div>
+          <input
+            type="text"
+            value={editingName}
+            onChange={(e) => onEditingNameChange(e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent"
+            style={{ transform: 'none' }}
+          />
         ) : (
-          <div className="text-sm font-medium text-gray-700">
-            {formatCurrency(category.budget, currencyFormat)}
-          </div>
+          <div className="text-sm font-medium text-gray-900">{category.name}</div>
         )}
       </td>
-      <td className="px-6 py-5 whitespace-nowrap">
+      <td className="px-6 py-4 whitespace-nowrap">
         {isEditing ? (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-500">{currencySymbol}</span>
-            <input
-              type="number"
-              value={activity}
-              disabled
-              className="w-full px-3 py-2 border border-gray-200 bg-gray-50 rounded-md text-gray-500"
-              style={{ transform: 'none' }}
-            />
-          </div>
+          <input
+            type="number"
+            value={editingBudget}
+            onChange={(e) => onEditingBudgetChange(e.target.value)}
+            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent"
+            style={{ transform: 'none' }}
+          />
         ) : (
-          <div className="text-sm text-gray-600 font-medium">
-            {formatCurrency(activity, currencyFormat)}
+          <div className="text-sm text-gray-900">
+            {currencySymbol}{category.budget.toLocaleString()}
           </div>
         )}
       </td>
-      <td className="px-6 py-5 whitespace-nowrap relative">
-        <div className="flex justify-between items-center w-full">
-          <div className="w-full mr-10">
-            <div className={`text-sm ${textColorClass} mb-2`}>
-              {formatCurrency(remaining, currencyFormat)}
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="text-sm text-gray-900">
+          {currencySymbol}{activity.toLocaleString()}
+        </div>
+      </td>
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="flex items-center">
+          <div className="flex-1">
+            <div className="text-sm text-gray-900">
+              <span className={textColorClass}>
+                {currencySymbol}{remaining.toLocaleString()}
+              </span>
             </div>
-            <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-              <div
-                className={`h-2.5 rounded-full ${progressClass} transition-colors duration-1000 ease-out animate-pulse`}
-                style={{
-                  width: `${percentUsed}%`,
-                  animation: `${remaining < 0 ? 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' : ''}`
-                }}
-              />
+            <div className="mt-1">
+              <div className="h-1 bg-gray-200 rounded-full">
+                <div
+                  className={`h-1 rounded-full ${progressClass}`}
+                  style={{ width: `${percentUsed}%` }}
+                />
+              </div>
             </div>
           </div>
-          
-          {isEditing ? (
-            <div className="flex gap-2 ml-2 flex-shrink-0">
-              <button
-                onClick={onUpdate}
-                className="p-1.5 bg-[rgb(88,0,159)] text-white rounded-md hover:bg-[rgb(73,0,132)] transition-colors flex items-center shadow-sm"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </button>
-              <button
-                onClick={onCancelEdit}
-                className="p-1.5 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors flex items-center"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          ) : (
-            <div className="relative flex-shrink-0">
-              <button 
-                onClick={onToggleMenu}
-                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                style={{ transform: 'none' }}
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                </svg>
-              </button>
-              
-              {menuOpenId === category.id && (
-                <div 
-                  className="absolute top-full mt-1 right-0 w-36 bg-white rounded-md shadow-lg z-10 border border-gray-200 py-1"
+          <div className="ml-4">
+            {isEditing ? (
+              <div className="flex space-x-2">
+                <button
+                  onClick={onUpdate}
+                  className="text-green-600 hover:text-green-800"
                 >
-                  <button
-                    onClick={onStartEditing}
-                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit
-                  </button>
-                  <button
-                    onClick={onDelete}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center gap-2"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={onCancelEdit}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleDeleteClick}
+                className="text-red-600 hover:text-red-800"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
       </td>
     </tr>
