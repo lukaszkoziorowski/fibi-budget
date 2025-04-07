@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
 import Navigation from '@/components/Navigation';
@@ -13,40 +13,40 @@ import AccountConnections from './components/AccountConnections';
 import Settings from './components/Settings';
 import LandingPage from './components/LandingPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { useSelector, useDispatch } from 'react-redux';
-import { RootState } from './store';
-import { setGlobalCurrency, resetState, loadUserData } from './store/budgetSlice';
-import { currencies } from './utils/currencies';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { useDispatch } from 'react-redux';
+import { loadUserData } from './store/budgetSlice';
+
+interface RouteWrapperProps {
+  children: React.ReactNode;
+}
+
+// Loading spinner component
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+  </div>
+);
 
 // PrivateRoute component
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+const PrivateRoute = ({ children }: RouteWrapperProps) => {
   const { currentUser, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
-  return currentUser ? <>{children}</> : <Navigate to="/login" />;
+  return currentUser ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
 // PublicRoute component - redirects to dashboard if user is logged in
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+const PublicRoute = ({ children }: RouteWrapperProps) => {
   const { currentUser, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
-  return !currentUser ? <>{children}</> : <Navigate to="/" />;
+  return !currentUser ? <>{children}</> : <Navigate to="/" replace />;
 };
 
 // MainAppLayout component to handle navigation visibility
@@ -92,14 +92,7 @@ const MainAppLayout = () => {
           !hideNavigation && !isMobile ? (isNavCollapsed ? 'pl-16' : 'pl-64') : ''
         }`}>
           <div className="max-w-[1000px] mx-auto px-4 py-6 md:py-8">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/transactions" element={<Transactions />} />
-              <Route path="/report" element={<Report />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/account/settings" element={<AccountSettings />} />
-              <Route path="/account/connections" element={<AccountConnections />} />
-            </Routes>
+            <Outlet />
           </div>
         </div>
       </main>
@@ -107,19 +100,63 @@ const MainAppLayout = () => {
   );
 };
 
+// Create router
+const router = createBrowserRouter([
+  {
+    path: "/landing",
+    element: <LandingPage />,
+    index: true
+  },
+  {
+    path: "/login",
+    element: <PublicRoute><Login /></PublicRoute>
+  },
+  {
+    path: "/signup",
+    element: <PublicRoute><SignUp /></PublicRoute>
+  },
+  {
+    path: "/",
+    element: <PrivateRoute><MainAppLayout /></PrivateRoute>,
+    children: [
+      {
+        index: true,
+        element: <Dashboard />
+      },
+      {
+        path: "transactions",
+        element: <Transactions />
+      },
+      {
+        path: "report",
+        element: <Report />
+      },
+      {
+        path: "settings",
+        element: <Settings />
+      },
+      {
+        path: "account/settings",
+        element: <AccountSettings />
+      },
+      {
+        path: "account/connections",
+        element: <AccountConnections />
+      }
+    ]
+  },
+  {
+    path: "*",
+    element: <Navigate to="/" replace />
+  }
+]);
+
 // Main App component
 const App = () => {
   return (
     <AuthProvider>
       <Provider store={store}>
-        <Router>
-          <Routes>
-            <Route path="/landing" element={<LandingPage />} />
-            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-            <Route path="/signup" element={<PublicRoute><SignUp /></PublicRoute>} />
-            <Route path="/*" element={<PrivateRoute><MainAppLayout /></PrivateRoute>} />
-          </Routes>
-        </Router>
+        <RouterProvider router={router} />
       </Provider>
     </AuthProvider>
   );
