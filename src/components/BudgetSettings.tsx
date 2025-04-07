@@ -3,22 +3,31 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
 import { setBudgetName, setCurrencyFormat, setGlobalCurrency, clearAllData } from '@/store/budgetSlice';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { formatCurrency, formatDate } from '@/utils/formatters';
+import { CurrencyFormat } from '@/types';
 
-interface BudgetSettingsProps {
-  onBack: () => void;
-}
-
-const BudgetSettings: React.FC<BudgetSettingsProps> = ({ onBack }) => {
+const BudgetSettings: React.FC = () => {
   const dispatch = useDispatch();
   const { budgetName, currencyFormat, globalCurrency } = useSelector((state: RootState) => state.budget);
   
   const [localBudgetName, setLocalBudgetName] = useState(budgetName);
   const [localCurrency, setLocalCurrency] = useState(globalCurrency);
   const [localCurrencyPlacement, setLocalCurrencyPlacement] = useState(currencyFormat.placement);
-  const [localNumberFormat, setLocalNumberFormat] = useState(currencyFormat.numberFormat);
+  const [localNumberFormat, setLocalNumberFormat] = useState<CurrencyFormat['numberFormat']>({
+    minimumFractionDigits: currencyFormat.numberFormat.minimumFractionDigits,
+    maximumFractionDigits: currencyFormat.numberFormat.maximumFractionDigits
+  });
   const [localDateFormat, setLocalDateFormat] = useState(currencyFormat.dateFormat);
   
   const [editingField, setEditingField] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Update local state when currencyFormat changes
+    setLocalNumberFormat({
+      minimumFractionDigits: currencyFormat.numberFormat.minimumFractionDigits,
+      maximumFractionDigits: currencyFormat.numberFormat.maximumFractionDigits
+    });
+  }, [currencyFormat.numberFormat]);
 
   const saveField = (field: string) => {
     switch (field) {
@@ -41,7 +50,10 @@ const BudgetSettings: React.FC<BudgetSettingsProps> = ({ onBack }) => {
       case 'numberFormat':
         dispatch(setCurrencyFormat({
           ...currencyFormat,
-          numberFormat: localNumberFormat,
+          numberFormat: {
+            minimumFractionDigits: Math.min(localNumberFormat.minimumFractionDigits, localNumberFormat.maximumFractionDigits),
+            maximumFractionDigits: Math.max(localNumberFormat.minimumFractionDigits, localNumberFormat.maximumFractionDigits)
+          },
         }));
         break;
       case 'dateFormat':
@@ -57,7 +69,6 @@ const BudgetSettings: React.FC<BudgetSettingsProps> = ({ onBack }) => {
   const handleResetData = () => {
     if (window.confirm('Are you sure you want to reset all data? This action cannot be undone.')) {
       dispatch(clearAllData());
-      onBack();
     }
   };
 
@@ -84,14 +95,10 @@ const BudgetSettings: React.FC<BudgetSettingsProps> = ({ onBack }) => {
     }
   };
 
-  const handleBack = () => {
-    onBack();
-  };
-
   return (
     <div className="max-w-3xl">
       {/* Content */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 space-y-6">
+      <div className="space-y-6">
         {/* Budget Name */}
         <div className="border-b border-gray-200 pb-4">
           <div className="flex justify-between items-start">
@@ -222,17 +229,46 @@ const BudgetSettings: React.FC<BudgetSettingsProps> = ({ onBack }) => {
               <h3 className="text-sm font-medium text-gray-700">Number Format</h3>
               {editingField === 'numberFormat' ? (
                 <div className="mt-1">
-                  <select
-                    id="numberFormat"
-                    value={localNumberFormat}
-                    onChange={(e) => setLocalNumberFormat(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
-                    autoFocus
-                  >
-                    <option value="123,456.78">123,456.78</option>
-                    <option value="123.456,78">123.456,78</option>
-                    <option value="123 456.78">123 456.78</option>
-                  </select>
+                  <div className="space-y-2">
+                    <div>
+                      <label htmlFor="minDecimals" className="block text-sm text-gray-600">Minimum Decimal Places</label>
+                      <input
+                        type="number"
+                        id="minDecimals"
+                        min={0}
+                        max={4}
+                        value={localNumberFormat.minimumFractionDigits}
+                        onChange={(e) => setLocalNumberFormat({
+                          ...localNumberFormat,
+                          minimumFractionDigits: Math.min(parseInt(e.target.value), localNumberFormat.maximumFractionDigits)
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="maxDecimals" className="block text-sm text-gray-600">Maximum Decimal Places</label>
+                      <input
+                        type="number"
+                        id="maxDecimals"
+                        min={localNumberFormat.minimumFractionDigits}
+                        max={4}
+                        value={localNumberFormat.maximumFractionDigits}
+                        onChange={(e) => setLocalNumberFormat({
+                          ...localNumberFormat,
+                          maximumFractionDigits: Math.max(parseInt(e.target.value), localNumberFormat.minimumFractionDigits)
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      Preview: {formatCurrency(1234.56, {
+                        currency: localCurrency,
+                        placement: localCurrencyPlacement,
+                        numberFormat: localNumberFormat,
+                        dateFormat: localDateFormat
+                      })}
+                    </div>
+                  </div>
                   <div className="mt-2 flex justify-end">
                     <button
                       onClick={() => saveField('numberFormat')}
@@ -243,7 +279,15 @@ const BudgetSettings: React.FC<BudgetSettingsProps> = ({ onBack }) => {
                   </div>
                 </div>
               ) : (
-                <p className="text-gray-500 text-sm mt-1">{localNumberFormat}</p>
+                <p className="text-gray-500 text-sm mt-1">
+                  {`${localNumberFormat.minimumFractionDigits}-${localNumberFormat.maximumFractionDigits} decimal places • `}
+                  {formatCurrency(1234.56, {
+                    currency: localCurrency,
+                    placement: localCurrencyPlacement,
+                    numberFormat: localNumberFormat,
+                    dateFormat: localDateFormat
+                  })}
+                </p>
               )}
             </div>
             {editingField !== 'numberFormat' && (
@@ -324,16 +368,6 @@ const BudgetSettings: React.FC<BudgetSettingsProps> = ({ onBack }) => {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Back Button */}
-      <div className="mt-6">
-        <button
-          onClick={handleBack}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-        >
-          Back to Settings
-        </button>
       </div>
     </div>
   );

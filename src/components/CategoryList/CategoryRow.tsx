@@ -1,6 +1,7 @@
 import React from 'react';
 import { Category } from '@/types';
 import { CurrencyFormat } from '@/types';
+import { formatCurrency } from '@/utils/formatters';
 
 interface CategoryRowProps {
   category: Category;
@@ -31,7 +32,7 @@ export const CategoryRow = ({
   isEditing,
   editingName,
   editingBudget,
-  currencySymbol,
+  currencyFormat,
   activity,
   remaining,
   percentUsed,
@@ -102,13 +103,13 @@ export const CategoryRow = ({
           />
         ) : (
           <div className="text-sm text-gray-900">
-            {currencySymbol}{category.budget.toLocaleString()}
+            {formatCurrency(category.budget, currencyFormat)}
           </div>
         )}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm text-gray-900">
-          {currencySymbol}{activity.toLocaleString()}
+          {formatCurrency(activity, currencyFormat)}
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
@@ -116,7 +117,7 @@ export const CategoryRow = ({
           <div className="flex-1">
             <div className="text-sm text-gray-900">
               <span className={textColorClass}>
-                {currencySymbol}{remaining.toLocaleString()}
+                {formatCurrency(remaining, currencyFormat)}
               </span>
             </div>
             <div className="mt-1">
@@ -151,11 +152,10 @@ export const CategoryRow = ({
             ) : (
               <button
                 onClick={handleDeleteClick}
-                className="text-gray-500 hover:text-gray-700"
-                aria-label="Delete"
+                className="text-red-400 hover:text-red-600"
               >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                 </svg>
               </button>
             )}

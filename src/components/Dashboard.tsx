@@ -12,22 +12,17 @@ import { useAuth } from '../contexts/AuthContext';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useBudgetStats } from '@/hooks/useBudgetStats';
 import { useModal } from '@/hooks/useModal';
-import { ChevronLeftIcon, ChevronRightIcon, BellIcon, ArrowTrendingUpIcon, CurrencyDollarIcon, ShoppingCartIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, ChevronRightIcon, ArrowTrendingUpIcon, CurrencyDollarIcon, ShoppingCartIcon, UserGroupIcon } from '@heroicons/react/24/outline';
 
-const DEFAULT_CURRENCY_FORMAT = {
-  currency: 'USD',
-  placement: 'before' as const,
-  numberFormat: '123,456.78',
-};
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const { currentUser } = useAuth();
-  const [isEditingCategories, setIsEditingCategories] = useState(false);
+  useAuth();
+  const [isEditingCategories] = useState(true);
   
   const { currentMonth: currentMonthString } = useSelector((state: RootState) => state.budget);
   const { currencyFormat } = useCurrency();
-  const { balance, assignedTotal, availableToAssign, totalTransactions, totalExpenses } = useBudgetStats();
+  const { assignedTotal, availableToAssign, totalTransactions, totalExpenses } = useBudgetStats();
   
   const addTransactionModal = useModal();
   const addCategoryModal = useModal();
@@ -42,13 +37,6 @@ const Dashboard = () => {
     dispatch(setCurrentMonth(addMonths(currentMonth, 1).toISOString()));
   };
 
-  const monthOptions = Array.from({ length: 12 }, (_, i) => {
-    const date = new Date(currentMonth.getFullYear(), i, 1);
-    return {
-      value: date.toISOString(),
-      label: format(date, 'LLLL', { locale: enUS }),
-    };
-  });
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -160,7 +148,7 @@ const Dashboard = () => {
         <CategoryList isEditing={isEditingCategories} />
 
         {/* Add Category Modal */}
-        {addCategoryModal.isOpen && <AddCategoryModal />}
+        {addCategoryModal.isOpen && <AddCategoryModal onClose={addCategoryModal.closeModal} />}
 
         {/* Add Transaction Modal */}
         {addTransactionModal.isOpen && (

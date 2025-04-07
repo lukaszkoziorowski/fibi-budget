@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { addCategory } from '@/store/budgetSlice';
-import { useModal } from '@/hooks/useModal';
 
-export const AddCategoryModal = () => {
+interface AddCategoryModalProps {
+  onClose: () => void;
+}
+
+export const AddCategoryModal = ({ onClose }: AddCategoryModalProps) => {
   const dispatch = useDispatch();
-  const modal = useModal();
   const [categoryName, setCategoryName] = useState('');
   const [budget, setBudget] = useState('');
 
@@ -23,7 +25,7 @@ export const AddCategoryModal = () => {
 
     setCategoryName('');
     setBudget('');
-    modal.closeModal();
+    onClose();
   };
 
   return (
@@ -32,7 +34,7 @@ export const AddCategoryModal = () => {
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-gray-900">Add New Category</h2>
           <button
-            onClick={modal.closeModal}
+            onClick={onClose}
             className="text-gray-400 hover:text-gray-500 transition-colors"
             aria-label="Close modal"
           >

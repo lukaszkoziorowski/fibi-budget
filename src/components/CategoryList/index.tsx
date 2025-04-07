@@ -1,54 +1,30 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { addCategory, deleteCategory, updateCategory, reorderCategories } from '@/store/budgetSlice';
+import { deleteCategory, updateCategory, reorderCategories } from '@/store/budgetSlice';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { calculateCategoryActivity, validateCategoryOperation } from '@/utils/categoryUtils';
 import { useBudgetStats } from '@/hooks/useBudgetStats';
-import { useModal } from '@/hooks/useModal';
-import { EmojiPicker } from './EmojiPicker';
 import { CategoryRow } from './CategoryRow';
 import { Category } from '@/types';
 
-interface CategoryListProps {
-  isEditing: boolean;
-}
 
-const CategoryList = ({ isEditing }: CategoryListProps) => {
+const CategoryList = () => {
   const dispatch = useDispatch();
   const { categories, transactions, currentMonth } = useSelector((state: RootState) => state.budget);
   const { currencyFormat, currencySymbol } = useCurrency();
   const { convertAmount } = useExchangeRates(transactions, currencyFormat.currency);
-  const { getCategoryStats } = useBudgetStats();
-  const emojiPicker = useModal();
+  useBudgetStats();
   
   // State management
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [selectedEmoji, setSelectedEmoji] = useState('📋');
-  const [emojiSearch, setEmojiSearch] = useState('');
-  const [activeEmojiCategory, setActiveEmojiCategory] = useState(0);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [editingBudget, setEditingBudget] = useState('');
-  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [menuOpenId] = useState<string | null>(null);
   const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(null);
 
   // Category operations
-  const handleAddCategory = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCategoryName.trim()) return;
-
-    dispatch(
-      addCategory({
-        id: Date.now().toString(),
-        name: `${selectedEmoji} ${newCategoryName.trim()}`,
-        budget: 0,
-      })
-    );
-    setNewCategoryName('');
-  }, [dispatch, newCategoryName, selectedEmoji]);
-
   const handleUpdateCategory = useCallback((id: string) => {
     if (!validateCategoryOperation.canUpdate(editingName, editingBudget)) return;
     
@@ -71,12 +47,6 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
     dispatch(deleteCategory(id));
   }, [dispatch, transactions]);
 
-  const handleStartEditing = useCallback((category: Category) => {
-    setEditingId(category.id);
-    setEditingName(category.name);
-    setEditingBudget(category.budget.toString());
-    setMenuOpenId(null);
-  }, []);
 
   // Drag and drop handlers
   const handleDragStart = useCallback((e: React.DragEvent, categoryId: string) => {
@@ -118,10 +88,6 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
   }, []);
 
   // UI Event Handlers
-  const toggleMenu = useCallback((e: React.MouseEvent, categoryId: string) => {
-    e.stopPropagation();
-    setMenuOpenId(menuOpenId === categoryId ? null : categoryId);
-  }, [menuOpenId]);
 
   // Category calculations
   const getCategoryDetails = useCallback((category: Category) => {
@@ -204,8 +170,6 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
                   onEditingBudgetChange={setEditingBudget}
                   onUpdate={() => handleUpdateCategory(category.id)}
                   onCancelEdit={resetEditingState}
-                  onToggleMenu={(e) => toggleMenu(e, category.id)}
-                  onStartEditing={() => handleStartEditing(category)}
                   onDelete={() => handleRemoveCategory(category.id)}
                 />
               );
@@ -213,54 +177,6 @@ const CategoryList = ({ isEditing }: CategoryListProps) => {
           </tbody>
         </table>
       </div>
-      
-      {/* Add Category Form */}
-      {isEditing && (
-        <div className="bg-white rounded-xl shadow-md border border-gray-100 py-3 px-4 mt-2 sticky bottom-0 z-10">
-          <form onSubmit={handleAddCategory} className="flex items-center gap-2">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  emojiPicker.toggleModal();
-                }}
-                className="h-10 w-10 flex items-center justify-center text-xl bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-                style={{ transform: 'none' }}
-              >
-                {selectedEmoji}
-              </button>
-              
-              <EmojiPicker
-                isOpen={emojiPicker.isOpen}
-                onClose={emojiPicker.closeModal}
-                onSelect={(emoji) => {
-                  setSelectedEmoji(emoji);
-                  emojiPicker.closeModal();
-                }}
-                emojiSearch={emojiSearch}
-                onSearchChange={setEmojiSearch}
-                activeCategory={activeEmojiCategory}
-                onCategoryChange={setActiveEmojiCategory}
-              />
-            </div>
-            
-            <input
-              type="text"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              placeholder="Enter new category name"
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent"
-              style={{ transform: 'none' }}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handleAddCategory(e);
-                }
-              }}
-            />
-          </form>
-        </div>
-      )}
     </div>
   );
 };

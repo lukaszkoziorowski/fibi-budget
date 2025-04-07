@@ -1,35 +1,44 @@
 import { currencies } from './currencies';
-
-interface CurrencyFormat {
-  currency: string;
-  placement: 'before' | 'after';
-  numberFormat: string;
-}
+import { CurrencyFormat } from '@/types';
 
 const DEFAULT_CURRENCY_FORMAT: CurrencyFormat = {
   currency: 'USD',
   placement: 'before',
-  numberFormat: '123,456.78',
+  numberFormat: {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  },
+  dateFormat: 'MM/DD/YYYY'
 };
 
 export const formatCurrency = (amount: number, format: CurrencyFormat = DEFAULT_CURRENCY_FORMAT): string => {
   const currencySymbol = currencies.find(c => c.code === format.currency)?.symbol || '$';
   
   // Format the number according to the selected format
-  let formattedNumber = '';
-  switch (format.numberFormat) {
-    case '123.456,78':
-      formattedNumber = amount.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      break;
-    case '123 456.78':
-      formattedNumber = amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).replace(/,/g, ' ');
-      break;
-    default: // '123,456.78'
-      formattedNumber = amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
+  const formattedNumber = amount.toLocaleString('en-US', {
+    minimumFractionDigits: format.numberFormat.minimumFractionDigits,
+    maximumFractionDigits: format.numberFormat.maximumFractionDigits
+  });
 
   // Apply currency placement
   return format.placement === 'before' 
     ? `${currencySymbol}${formattedNumber}`
     : `${formattedNumber}${currencySymbol}`;
+};
+
+export const formatDate = (date: Date, format: string): string => {
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear();
+
+  switch (format) {
+    case 'MM/DD/YYYY':
+      return `${month}/${day}/${year}`;
+    case 'DD/MM/YYYY':
+      return `${day}/${month}/${year}`;
+    case 'YYYY-MM-DD':
+      return `${year}-${month}-${day}`;
+    default:
+      return date.toISOString().split('T')[0];
+  }
 }; 

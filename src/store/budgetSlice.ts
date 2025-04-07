@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { auth } from '../config/firebase';
+import { CurrencyFormat } from '@/types';
 
 export interface Category {
   id: string;
@@ -26,12 +27,7 @@ interface BudgetState {
   currentMonth: string;
   globalCurrency: string;
   budgetName: string;
-  currencyFormat: {
-    currency: string;
-    placement: 'before' | 'after';
-    numberFormat: string;
-    dateFormat: string;
-  };
+  currencyFormat: CurrencyFormat;
 }
 
 // Load initial state from localStorage if available
@@ -51,7 +47,20 @@ const loadState = (): BudgetState => {
       localStorage.setItem(`budgetState_${userId}`, JSON.stringify(initialState));
       return initialState;
     }
-    return JSON.parse(serializedState);
+
+    const state = JSON.parse(serializedState);
+    
+    // Migration: Convert string-based numberFormat to object-based
+    if (typeof state.currencyFormat?.numberFormat === 'string') {
+      state.currencyFormat.numberFormat = {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      };
+      // Save the migrated state
+      localStorage.setItem(`budgetState_${userId}`, JSON.stringify(state));
+    }
+    
+    return state;
   } catch (err) {
     console.error('Error loading state from localStorage:', err);
     return getDefaultState();
@@ -80,8 +89,11 @@ const getDefaultState = (): BudgetState => ({
   budgetName: 'My Budget',
   currencyFormat: {
     currency: 'USD',
-    placement: 'before' as const,
-    numberFormat: '123,456.78',
+    placement: 'before',
+    numberFormat: {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    },
     dateFormat: 'MM/DD/YYYY',
   },
 });

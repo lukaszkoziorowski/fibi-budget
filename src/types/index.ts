@@ -22,6 +22,7 @@ export interface CurrencyFormat {
     minimumFractionDigits: number;
     maximumFractionDigits: number;
   };
+  dateFormat: string;
 }
 
 export interface BudgetState {
@@ -31,6 +32,7 @@ export interface BudgetState {
   currentMonth: string;
   globalCurrency: string;
   currencyFormat: CurrencyFormat;
+  budgetName: string;
 }
 
 export interface RootState {

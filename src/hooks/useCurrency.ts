@@ -1,11 +1,16 @@
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import { currencies } from '@/utils/currencies';
+import { CurrencyFormat } from '@/types';
 
-export const DEFAULT_CURRENCY_FORMAT = {
+export const DEFAULT_CURRENCY_FORMAT: CurrencyFormat = {
   currency: 'USD',
-  placement: 'before' as const,
-  numberFormat: '123,456.78',
+  placement: 'before',
+  numberFormat: {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  },
+  dateFormat: 'MM/DD/YYYY'
 };
 
 export const useCurrency = () => {
