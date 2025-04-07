@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import React from 'react';
 import { Category } from '@/types';
 import { CurrencyFormat } from '@/types';
-import { formatCurrency } from '@/utils/formatters';
 
 interface CategoryRowProps {
   category: Category;
@@ -16,10 +15,10 @@ interface CategoryRowProps {
   percentUsed: number;
   progressClass: string;
   textColorClass: string;
-  onDragStart: (e: React.DragEvent) => void;
-  onDragEnd: (e: React.DragEvent) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDrop: (e: React.DragEvent) => void;
+  onDragStart: (e: React.DragEvent<HTMLTableRowElement>) => void;
+  onDragEnd: (e: React.DragEvent<HTMLTableRowElement>) => void;
+  onDragOver: (e: React.DragEvent<HTMLTableRowElement>) => void;
+  onDrop: (e: React.DragEvent<HTMLTableRowElement>) => void;
   onEditingNameChange: (name: string) => void;
   onEditingBudgetChange: (budget: string) => void;
   onUpdate: () => void;
@@ -32,8 +31,6 @@ export const CategoryRow = ({
   isEditing,
   editingName,
   editingBudget,
-  menuOpenId,
-  currencyFormat,
   currencySymbol,
   activity,
   remaining,
@@ -50,13 +47,6 @@ export const CategoryRow = ({
   onCancelEdit,
   onDelete
 }: CategoryRowProps) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const handleMenuClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsMenuOpen(!isMenuOpen);
-  };
-
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     onDelete();
@@ -74,16 +64,16 @@ export const CategoryRow = ({
       <td className="px-3 py-4 whitespace-nowrap">
         <div className="flex items-center justify-center">
           <svg
-            className="h-5 w-5 text-gray-400 cursor-move"
+            className="h-4 w-4 text-gray-300 cursor-move"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
+            strokeWidth={1.5}
           >
             <path
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 6h16M4 12h16M4 18h16"
+              d="M5 9h14M5 15h14"
             />
           </svg>
         </div>
@@ -161,7 +151,8 @@ export const CategoryRow = ({
             ) : (
               <button
                 onClick={handleDeleteClick}
-                className="text-red-600 hover:text-red-800"
+                className="text-gray-500 hover:text-gray-700"
+                aria-label="Delete"
               >
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
