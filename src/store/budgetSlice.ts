@@ -1,34 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { auth } from '../config/firebase';
-import { CurrencyFormat } from '@/types';
-
-export interface Category {
-  id: string;
-  name: string;
-  budget: number;
-}
-
-export interface Transaction {
-  id: string;
-  description: string;
-  amount: number;
-  categoryId: string;
-  type: 'income' | 'expense';
-  date: string;
-  currency: string;
-  originalAmount?: number;
-  originalCurrency?: string;
-}
-
-interface BudgetState {
-  categories: Category[];
-  transactions: Transaction[];
-  balance: number;
-  currentMonth: string;
-  globalCurrency: string;
-  budgetName: string;
-  currencyFormat: CurrencyFormat;
-}
+import type { CurrencyFormat, BudgetState, Category, Transaction, CategoryGroup } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
 
 // Load initial state from localStorage if available
 const loadState = (): BudgetState => {
@@ -80,22 +53,38 @@ const saveState = (state: BudgetState) => {
   }
 };
 
-const getDefaultState = (): BudgetState => ({
-  categories: [],
+export const getDefaultState = (): BudgetState => ({
+  categories: [
+    { id: 'news', name: 'News', budget: 0, groupId: '' },
+    { id: 'auto-insurance', name: 'Auto insurance', budget: 0, groupId: '' },
+    { id: 'groceries', name: 'Groceries', budget: 0, groupId: '' },
+    { id: 'gas', name: 'Gas', budget: 0, groupId: '' },
+    { id: 'pet-food', name: 'Pet food', budget: 0, groupId: '' },
+    { id: 'pet-boarding', name: 'Pet boarding', budget: 0, groupId: '' },
+    { id: 'pet-toys', name: 'Pet toys & treats', budget: 0, groupId: '' },
+    { id: 'auto-maintenance', name: 'Auto maintenance', budget: 0, groupId: '' },
+    { id: 'bike-maintenance', name: 'Bike maintenance', budget: 0, groupId: '' },
+    { id: 'taxes', name: 'Taxes or other fees', budget: 0, groupId: '' },
+    { id: 'dining', name: 'Dining out', budget: 0, groupId: '' },
+    { id: 'entertainment', name: 'Entertainment', budget: 0, groupId: '' },
+    { id: 'baby', name: 'Baby', budget: 0, groupId: '' }
+  ],
+  categoryGroups: [],
   transactions: [],
-  balance: 0,
   currentMonth: new Date().toISOString(),
   globalCurrency: 'USD',
-  budgetName: 'My Budget',
   currencyFormat: {
     currency: 'USD',
+    locale: 'en-US',
     placement: 'before',
     numberFormat: {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     },
-    dateFormat: 'MM/DD/YYYY',
+    dateFormat: 'MM/DD/YYYY'
   },
+  balance: 0,
+  budgetName: 'My Budget'
 });
 
 const initialState: BudgetState = loadState();
@@ -108,49 +97,59 @@ const budgetSlice = createSlice({
       const loadedState = loadState();
       Object.assign(state, loadedState);
     },
-    addCategory: (state, action: PayloadAction<Category>) => {
-      state.categories.push(action.payload);
+    addCategory: (state, action: PayloadAction<{ name: string; budget: number; groupId: string }>) => {
+      state.categories.push({
+        id: uuidv4(),
+        ...action.payload
+      });
       saveState(state);
     },
-    updateCategory: (state, action: PayloadAction<Category>) => {
-      const index = state.categories.findIndex(c => c.id === action.payload.id);
-      if (index !== -1) {
-        state.categories[index] = action.payload;
-        saveState(state);
+    updateCategory: (state, action: PayloadAction<{ id: string; name?: string; budget?: number }>) => {
+      const category = state.categories.find(c => c.id === action.payload.id);
+      if (category) {
+        if (action.payload.name !== undefined) category.name = action.payload.name;
+        if (action.payload.budget !== undefined) category.budget = action.payload.budget;
       }
+      saveState(state);
     },
     deleteCategory: (state, action: PayloadAction<string>) => {
       state.categories = state.categories.filter(c => c.id !== action.payload);
       state.transactions = state.transactions.filter(t => t.categoryId !== action.payload);
       saveState(state);
     },
-    addTransaction: (state, action: PayloadAction<Transaction>) => {
-      state.transactions.push(action.payload);
-      if (action.payload.currency === state.globalCurrency) {
-        state.balance += action.payload.amount;
-      } else {
-        // If transaction is in a different currency, use the converted amount
-        state.balance += action.payload.amount;
-        // Original amount and currency are stored for reference
+    addTransaction: (state, action: PayloadAction<Omit<Transaction, 'id'>>) => {
+      const transaction = {
+        id: uuidv4(),
+        ...action.payload
+      };
+      state.transactions.push(transaction);
+      state.balance += transaction.type === 'income' ? transaction.amount : -transaction.amount;
+      saveState(state);
+    },
+    updateTransaction: (state, action: PayloadAction<{ id: string } & Partial<Omit<Transaction, 'id'>>>) => {
+      const index = state.transactions.findIndex(t => t.id === action.payload.id);
+      if (index !== -1) {
+        const oldTransaction = state.transactions[index];
+        state.balance -= oldTransaction.type === 'income' ? oldTransaction.amount : -oldTransaction.amount;
+        
+        state.transactions[index] = {
+          ...oldTransaction,
+          ...action.payload
+        };
+        
+        state.balance += state.transactions[index].type === 'income' 
+          ? state.transactions[index].amount 
+          : -state.transactions[index].amount;
       }
       saveState(state);
     },
-    updateTransaction: (state, action: PayloadAction<Transaction>) => {
-      const index = state.transactions.findIndex(t => t.id === action.payload.id);
-      if (index !== -1) {
-        // Remove old transaction's impact on balance
-        if (state.transactions[index].currency === state.globalCurrency) {
-          state.balance -= state.transactions[index].amount;
-        }
-        
-        // Add new transaction's impact on balance
-        if (action.payload.currency === state.globalCurrency) {
-          state.balance += action.payload.amount;
-        }
-        
-        state.transactions[index] = action.payload;
-        saveState(state);
+    deleteTransaction: (state, action: PayloadAction<string>) => {
+      const transaction = state.transactions.find(t => t.id === action.payload);
+      if (transaction) {
+        state.balance -= transaction.type === 'income' ? transaction.amount : -transaction.amount;
+        state.transactions = state.transactions.filter(t => t.id !== action.payload);
       }
+      saveState(state);
     },
     setCurrentMonth: (state, action: PayloadAction<string>) => {
       const previousMonth = state.currentMonth;
@@ -171,18 +170,11 @@ const budgetSlice = createSlice({
     },
     setGlobalCurrency: (state, action: PayloadAction<string>) => {
       state.globalCurrency = action.payload;
-      // Also update the currency in currencyFormat to keep them in sync
       state.currencyFormat.currency = action.payload;
       saveState(state);
     },
-    setBudgetName: (state, action: PayloadAction<string>) => {
-      state.budgetName = action.payload;
-      saveState(state);
-    },
-    setCurrencyFormat: (state, action: PayloadAction<BudgetState['currencyFormat']>) => {
+    setCurrencyFormat: (state, action: PayloadAction<CurrencyFormat>) => {
       state.currencyFormat = action.payload;
-      // Keep global currency in sync with currency format
-      state.globalCurrency = action.payload.currency;
       saveState(state);
     },
     // Add a new action to clear all data
@@ -226,6 +218,52 @@ const budgetSlice = createSlice({
       // Save new default state
       saveState(defaultState);
     },
+    updateCategoryGroup: (state, action: PayloadAction<{ id: string; name: string }>) => {
+      const group = state.categoryGroups.find(g => g.id === action.payload.id);
+      if (group) {
+        group.name = action.payload.name;
+      }
+      saveState(state);
+    },
+    addCategoryGroup: (state, action: PayloadAction<{ name: string }>) => {
+      state.categoryGroups.push({
+        id: uuidv4(),
+        name: action.payload.name,
+        isCollapsed: false
+      });
+      saveState(state);
+    },
+    deleteCategoryGroup: (state, action: PayloadAction<string>) => {
+      state.categoryGroups = state.categoryGroups.filter(g => g.id !== action.payload);
+      state.categories = state.categories.filter(c => c.groupId !== action.payload);
+      saveState(state);
+    },
+    toggleGroupCollapse: (state, action: PayloadAction<string>) => {
+      const group = state.categoryGroups.find(g => g.id === action.payload);
+      if (group) {
+        group.isCollapsed = !group.isCollapsed;
+      }
+      saveState(state);
+    },
+    moveCategoryToGroup: (state, action: PayloadAction<{ categoryId: string; groupId: string }>) => {
+      const category = state.categories.find(c => c.id === action.payload.categoryId);
+      if (category) {
+        category.groupId = action.payload.groupId;
+      }
+      saveState(state);
+    },
+    setBudgetName: (state, action: PayloadAction<string>) => {
+      state.budgetName = action.payload;
+      saveState(state);
+    },
+    randomizeCategories: (state) => {
+      const groupIds = state.categoryGroups.map(group => group.id);
+      state.categories = state.categories.map(category => ({
+        ...category,
+        groupId: groupIds[Math.floor(Math.random() * groupIds.length)]
+      }));
+      saveState(state);
+    }
   },
 });
 
@@ -236,14 +274,21 @@ export const {
   deleteCategory,
   addTransaction,
   updateTransaction,
+  deleteTransaction,
   setCurrentMonth,
   setGlobalCurrency,
-  setBudgetName,
   setCurrencyFormat,
   clearAllData,
   reorderCategories,
   resetState,
   clearUserData,
+  updateCategoryGroup,
+  addCategoryGroup,
+  deleteCategoryGroup,
+  toggleGroupCollapse,
+  moveCategoryToGroup,
+  setBudgetName,
+  randomizeCategories
 } = budgetSlice.actions;
 
 export default budgetSlice.reducer; 

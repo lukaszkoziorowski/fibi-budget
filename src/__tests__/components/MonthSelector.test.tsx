@@ -3,6 +3,7 @@ import { Provider } from 'react-redux';
 import { configureStore, AnyAction } from '@reduxjs/toolkit';
 import MonthSelector from '@/components/MonthSelector';
 import { BudgetState } from '@/types';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 const initialState: BudgetState = {
   categories: [],
@@ -15,13 +16,15 @@ const initialState: BudgetState = {
     numberFormat: {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }
+    },
+    dateFormat: ''
   },
-  balance: 1000
+  balance: 1000,
+  budgetName: ''
 };
 
 describe('MonthSelector', () => {
-  const mockStore = configureStore({
+  const createMockStore = (state = initialState) => configureStore({
     reducer: {
       budget: (state: BudgetState = initialState, action: AnyAction): BudgetState => {
         switch (action.type) {
@@ -34,11 +37,17 @@ describe('MonthSelector', () => {
             return state;
         }
       }
+    },
+    preloadedState: {
+      budget: state
     }
   });
 
+  let mockStore = createMockStore();
+
   beforeEach(() => {
-    jest.clearAllMocks();
+    mockStore = createMockStore();
+    vi.clearAllMocks();
   });
 
   it('renders the current month', () => {
@@ -48,7 +57,8 @@ describe('MonthSelector', () => {
       </Provider>
     );
 
-    expect(screen.getByText('March 2024')).toBeInTheDocument();
+    const currentMonthDisplay = screen.getByText('March 2024', { selector: '.text-lg.font-semibold' });
+    expect(currentMonthDisplay).toBeInTheDocument();
   });
 
   it('displays navigation buttons', () => {
@@ -137,11 +147,13 @@ describe('MonthSelector', () => {
   });
 
   it('handles invalid date navigation', () => {
-    // Set initial state to February 2024
-    mockStore.dispatch({ type: 'budget/setCurrentMonth', payload: '2024-02' });
+    const store = createMockStore({
+      ...initialState,
+      currentMonth: '2024-02'
+    });
 
     render(
-      <Provider store={mockStore}>
+      <Provider store={store}>
         <MonthSelector />
       </Provider>
     );
@@ -150,13 +162,13 @@ describe('MonthSelector', () => {
     const prevButton = screen.getByRole('button', { name: /previous month/i });
     fireEvent.click(prevButton);
 
-    expect(mockStore.getState().budget.currentMonth).toBe('2024-01');
+    expect(store.getState().budget.currentMonth).toBe('2024-01');
 
     // Try to navigate to next month (March 2024)
     const nextButton = screen.getByRole('button', { name: /next month/i });
     fireEvent.click(nextButton);
 
-    expect(mockStore.getState().budget.currentMonth).toBe('2024-02');
+    expect(store.getState().budget.currentMonth).toBe('2024-02');
   });
 
   it('formats month names correctly', () => {
@@ -173,15 +185,19 @@ describe('MonthSelector', () => {
     ];
 
     months.forEach((month, index) => {
-      mockStore.dispatch({ type: 'budget/setCurrentMonth', payload: month });
+      const store = createMockStore({
+        ...initialState,
+        currentMonth: month
+      });
 
       render(
-        <Provider store={mockStore}>
+        <Provider store={store}>
           <MonthSelector />
         </Provider>
       );
 
-      expect(screen.getByText(expectedNames[index])).toBeInTheDocument();
+      const currentMonthDisplay = screen.getByText(expectedNames[index], { selector: '.text-lg.font-semibold' });
+      expect(currentMonthDisplay).toBeInTheDocument();
     });
   });
 }); 

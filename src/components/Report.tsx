@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { formatCurrency } from '@/utils/formatters';
 
 const Report = () => {
-  const { transactions, categories, currentMonth } = useSelector((state: RootState) => state.budget);
+  const { transactions, categories } = useSelector((state: RootState) => state.budget);
   const { currencyFormat } = useCurrency();
   const { convertAmount } = useExchangeRates(transactions, currencyFormat.currency);
 
@@ -47,7 +47,7 @@ const Report = () => {
         {/* Expenses Trend Chart */}
         <div className="bg-white p-6 rounded-xl shadow-lg mb-8">
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Expenses Trend</h2>
-          <div className="h-[400px]">
+          <div className="h-[400px]" data-testid="chart-container">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={monthlyData}

@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { useCurrency } from '@/hooks/useCurrency';
 import { BudgetState } from '@/types';
-import type { FC, PropsWithChildren } from 'react';
+import type { PropsWithChildren } from 'react';
 
 const initialState: BudgetState = {
   categories: [],
@@ -16,13 +16,16 @@ const initialState: BudgetState = {
     numberFormat: {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }
+    },
+    dateFormat: 'MM/DD/YYYY'
   },
-  balance: 1000
+  balance: 1000,
+  budgetName: '',
+  categoryGroups: []
 };
 
-const createWrapper = (state: BudgetState): FC<PropsWithChildren> => {
-  return ({ children }) => {
+const createWrapper = (state: BudgetState) => {
+  return function Wrapper({ children }: PropsWithChildren) {
     const store = configureStore({
       reducer: {
         budget: () => state

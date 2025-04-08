@@ -77,7 +77,7 @@ const AccountsDropdown = ({ isCollapsed }: AccountsDropdownProps) => {
     setShowAddForm(true);
   };
 
-  const getAccountIcon = (type: Account['type']) => {
+  const getAccountIcon = (_type?: string) => {
     return <BanknotesIcon className="w-5 h-5" />;
   };
 

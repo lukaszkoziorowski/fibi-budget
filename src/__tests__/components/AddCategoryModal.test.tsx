@@ -3,7 +3,6 @@ import { Provider } from 'react-redux';
 import { configureStore, AnyAction } from '@reduxjs/toolkit';
 import { AddCategoryModal } from '@/components/AddCategoryModal';
 import { Category } from '@/types';
-import { CurrencyFormat } from '@/utils/formatters';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock the hooks

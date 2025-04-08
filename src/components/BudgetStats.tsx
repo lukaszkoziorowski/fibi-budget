@@ -58,6 +58,7 @@ const BudgetStats = () => {
             aria-valuemax={100}
             style={{ width: `${Math.min(percentUsed, 100)}%` }}
             className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-${getProgressBarColor()}-500`}
+            data-testid="budget-progress"
           />
         </div>
       </div>

@@ -17,13 +17,29 @@ export const formatCurrency = (amount: number, format: CurrencyFormat = DEFAULT_
   // Format the number according to the selected format
   const formattedNumber = amount.toLocaleString('en-US', {
     minimumFractionDigits: format.numberFormat.minimumFractionDigits,
-    maximumFractionDigits: format.numberFormat.maximumFractionDigits
+    maximumFractionDigits: format.numberFormat.maximumFractionDigits,
+    useGrouping: true
   });
 
-  // Apply currency placement
-  return format.placement === 'before' 
-    ? `${currencySymbol}${formattedNumber}`
-    : `${formattedNumber}${currencySymbol}`;
+  // Handle negative numbers
+  const isNegative = amount < 0;
+  const absoluteNumber = Math.abs(amount).toLocaleString('en-US', {
+    minimumFractionDigits: format.numberFormat.minimumFractionDigits,
+    maximumFractionDigits: format.numberFormat.maximumFractionDigits,
+    useGrouping: true
+  });
+
+  // Apply currency placement and handle negative numbers
+  let result = format.placement === 'before' 
+    ? `${currencySymbol}${absoluteNumber}`
+    : `${absoluteNumber}${currencySymbol}`;
+
+  // Add negative sign in the correct position
+  if (isNegative) {
+    result = format.placement === 'before' ? `-${result}` : `-${result}`;
+  }
+
+  return result;
 };
 
 export const formatDate = (date: Date, format: string): string => {

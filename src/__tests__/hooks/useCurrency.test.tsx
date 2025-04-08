@@ -17,20 +17,27 @@ const initialState: BudgetState = {
     numberFormat: {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }
+    },
+    dateFormat: 'MM/DD/YYYY'
   },
-  balance: 1000
+  balance: 1000,
+  budgetName: '',
+  categoryGroups: []
 };
 
 const createWrapper = (state: BudgetState): FC<PropsWithChildren> => {
-  return ({ children }) => {
+  return function Wrapper({ children }) {
     const store = configureStore({
       reducer: {
         budget: () => state
       }
     });
 
-    return <Provider store={store}>{children}</Provider>;
+    return (
+      <Provider store={store}>
+        {children}
+      </Provider>
+    );
   };
 };
 

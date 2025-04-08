@@ -18,7 +18,7 @@ export const useCurrency = () => {
     (state: RootState) => state.budget
   );
 
-  const currencySymbol = currencies.find(c => c.code === globalCurrency)?.symbol || '$';
+  const currencySymbol = currencies.find(c => c.code === globalCurrency)?.symbol || globalCurrency;
 
   return {
     globalCurrency,

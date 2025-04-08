@@ -1,6 +1,7 @@
 import { render, fireEvent, screen } from '@testing-library/react';
 import { CategoryRow } from '@/components/CategoryList/CategoryRow';
 import { Category, CurrencyFormat } from '@/types';
+import { describe, it, expect, vi } from 'vitest';
 
 describe('CategoryRow', () => {
   const mockCategory: Category = {
@@ -15,7 +16,8 @@ describe('CategoryRow', () => {
     numberFormat: {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }
+    },
+    dateFormat: 'MM/DD/YYYY'
   };
 
   const mockProps = {
@@ -31,26 +33,27 @@ describe('CategoryRow', () => {
     percentUsed: 50,
     progressClass: 'bg-green-500',
     textColorClass: 'text-green-600',
-    onDragStart: jest.fn(),
-    onDragEnd: jest.fn(),
-    onDragOver: jest.fn(),
-    onDrop: jest.fn(),
-    onEditingNameChange: jest.fn(),
-    onEditingBudgetChange: jest.fn(),
-    onUpdate: jest.fn(),
-    onCancelEdit: jest.fn(),
-    onDelete: jest.fn()
+    onDragStart: vi.fn(),
+    onDragEnd: vi.fn(),
+    onDragOver: vi.fn(),
+    onDrop: vi.fn(),
+    onEditingNameChange: vi.fn(),
+    onEditingBudgetChange: vi.fn(),
+    onUpdate: vi.fn(),
+    onCancelEdit: vi.fn(),
+    onDelete: vi.fn()
   };
 
   it('should render category name and budget', () => {
     render(<CategoryRow {...mockProps} />);
     expect(screen.getByText('Food')).toBeInTheDocument();
-    expect(screen.getByText('$1,000')).toBeInTheDocument();
+    expect(screen.getByText((content) => content.includes('$1,000.00'))).toBeInTheDocument();
   });
 
   it('should render activity and remaining amounts', () => {
     render(<CategoryRow {...mockProps} />);
-    expect(screen.getByText('$500')).toBeInTheDocument();
+    const activityAmount = screen.getByText('$500.00', { selector: 'div.text-sm.text-gray-900' });
+    expect(activityAmount).toBeInTheDocument();
   });
 
   it('should show edit inputs when isEditing is true', () => {

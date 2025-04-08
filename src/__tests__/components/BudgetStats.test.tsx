@@ -3,10 +3,12 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import BudgetStats from '@/components/BudgetStats';
 import { BudgetState } from '@/types';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { useBudgetStats } from '@/hooks/useBudgetStats';
 
 // Mock the useBudgetStats hook
-jest.mock('@/hooks/useBudgetStats', () => ({
-  useBudgetStats: () => ({
+vi.mock('@/hooks/useBudgetStats', () => ({
+  useBudgetStats: vi.fn().mockReturnValue({
     assignedTotal: 2000,
     totalExpenses: 1200,
     availableToAssign: 800,
@@ -17,7 +19,7 @@ jest.mock('@/hooks/useBudgetStats', () => ({
 }));
 
 // Mock the useCurrency hook
-jest.mock('@/hooks/useCurrency', () => ({
+vi.mock('@/hooks/useCurrency', () => ({
   useCurrency: () => ({
     currencyFormat: {
       currency: 'USD',
@@ -64,9 +66,11 @@ const initialState: BudgetState = {
     numberFormat: {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }
+    },
+    dateFormat: ''
   },
-  balance: 1000
+  balance: 1000,
+  budgetName: ''
 };
 
 describe('BudgetStats', () => {
@@ -77,7 +81,7 @@ describe('BudgetStats', () => {
   });
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('renders the budget statistics', () => {
@@ -137,71 +141,70 @@ describe('BudgetStats', () => {
 
   it('applies warning color when budget usage is high', () => {
     // Mock the useBudgetStats hook with high usage
-    jest.mock('@/hooks/useBudgetStats', () => ({
-      useBudgetStats: () => ({
-        assignedTotal: 2000,
-        totalExpenses: 1800,
-        availableToAssign: 200,
-        balance: 2000,
-        totalTransactions: 5,
-        getCategoryStats: () => ({})
+    (useBudgetStats as jest.Mock).mockReturnValue({
+      assignedTotal: 2000,
+      totalExpenses: 1800,
+      balance: 2000,
+      availableToAssign: 200,
+      totalTransactions: 5,
+      getCategoryStats: (categoryId: string) => ({
+        spent: 1800,
+        remaining: 200,
+        progress: 90
       })
-    }));
+    });
 
     render(
       <Provider store={mockStore}>
         <BudgetStats />
       </Provider>
     );
-
-    const progressBar = screen.getByRole('progressbar');
-    expect(progressBar).toHaveClass('warning');
+    expect(screen.getByTestId('budget-progress')).toHaveClass('bg-warning-500');
   });
 
   it('applies danger color when budget is exceeded', () => {
     // Mock the useBudgetStats hook with exceeded budget
-    jest.mock('@/hooks/useBudgetStats', () => ({
-      useBudgetStats: () => ({
-        assignedTotal: 2000,
-        totalExpenses: 2200,
-        availableToAssign: -200,
-        balance: 2000,
-        totalTransactions: 5,
-        getCategoryStats: () => ({})
+    (useBudgetStats as jest.Mock).mockReturnValue({
+      assignedTotal: 2000,
+      totalExpenses: 2200,
+      balance: 2000,
+      availableToAssign: -200,
+      totalTransactions: 5,
+      getCategoryStats: (categoryId: string) => ({
+        spent: 2200,
+        remaining: -200,
+        progress: 110
       })
-    }));
+    });
 
     render(
       <Provider store={mockStore}>
         <BudgetStats />
       </Provider>
     );
-
-    const progressBar = screen.getByRole('progressbar');
-    expect(progressBar).toHaveClass('danger');
+    expect(screen.getByTestId('budget-progress')).toHaveClass('bg-danger-500');
   });
 
   it('handles zero budget case', () => {
     // Mock the useBudgetStats hook with zero budget
-    jest.mock('@/hooks/useBudgetStats', () => ({
-      useBudgetStats: () => ({
-        assignedTotal: 0,
-        totalExpenses: 0,
-        availableToAssign: 0,
-        balance: 0,
-        totalTransactions: 0,
-        getCategoryStats: () => ({})
+    (useBudgetStats as jest.Mock).mockReturnValue({
+      assignedTotal: 0,
+      totalExpenses: 0,
+      balance: 0,
+      availableToAssign: 0,
+      totalTransactions: 0,
+      getCategoryStats: (categoryId: string) => ({
+        spent: 0,
+        remaining: 0,
+        progress: 0
       })
-    }));
+    });
 
     render(
       <Provider store={mockStore}>
         <BudgetStats />
       </Provider>
     );
-
-    expect(screen.getByText('$0.00')).toBeInTheDocument();
-    const progressBar = screen.getByRole('progressbar');
-    expect(progressBar).toHaveAttribute('aria-valuenow', '0');
+    expect(screen.getByTestId('budget-progress')).toHaveStyle({ width: '0%' });
   });
 }); 

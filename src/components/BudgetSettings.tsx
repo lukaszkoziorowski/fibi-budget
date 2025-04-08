@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
 import { setBudgetName, setCurrencyFormat, setGlobalCurrency, clearAllData } from '@/store/budgetSlice';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
-import { formatCurrency, formatDate } from '@/utils/formatters';
+import { formatCurrency } from '@/utils/formatters';
 import { CurrencyFormat } from '@/types';
 
 const BudgetSettings: React.FC = () => {

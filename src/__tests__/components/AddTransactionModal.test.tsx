@@ -2,7 +2,7 @@ import { render, fireEvent, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore, AnyAction } from '@reduxjs/toolkit';
 import AddTransactionModal from '@/components/AddTransactionModal';
-import { Category, Transaction, CurrencyFormat, BudgetState } from '@/types';
+import { Category, CurrencyFormat, BudgetState } from '@/types';
 
 // Mock the hooks
 jest.mock('@/hooks/useCurrency', () => ({
@@ -33,7 +33,8 @@ const mockCurrencyFormat: CurrencyFormat = {
   numberFormat: {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  }
+  },
+  dateFormat: ''
 };
 
 const initialState: BudgetState = {
@@ -42,7 +43,8 @@ const initialState: BudgetState = {
   currentMonth: '2024-03',
   globalCurrency: 'USD',
   currencyFormat: mockCurrencyFormat,
-  balance: 0
+  balance: 0,
+  budgetName: ''
 };
 
 describe('AddTransactionModal', () => {

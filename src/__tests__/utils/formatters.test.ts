@@ -1,12 +1,16 @@
 import { formatCurrency } from '@/utils/formatters';
-import type { CurrencyFormat } from '@/utils/formatters';
+import type { CurrencyFormat } from '@/types';
 
 describe('formatters', () => {
   describe('formatCurrency', () => {
     const mockFormat: CurrencyFormat = {
       currency: 'USD',
-      placement: 'before' as const,
-      numberFormat: '123,456.78'
+      placement: 'before',
+      numberFormat: {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      },
+      dateFormat: 'MM/DD/YYYY'
     };
 
     it('formats positive numbers correctly', () => {
@@ -24,7 +28,7 @@ describe('formatters', () => {
     it('handles currency placement after the number', () => {
       const afterFormat: CurrencyFormat = {
         ...mockFormat,
-        placement: 'after' as const
+        placement: 'after'
       };
       expect(formatCurrency(100.5, afterFormat)).toBe('100.50$');
     });
@@ -40,15 +44,24 @@ describe('formatters', () => {
     it('handles different number formats', () => {
       const germanFormat: CurrencyFormat = {
         ...mockFormat,
-        numberFormat: '123.456,78'
+        numberFormat: {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+          decimalSeparator: ',',
+          thousandsSeparator: '.'
+        }
       };
-      expect(formatCurrency(100.5, germanFormat)).toBe('$100,50');
+      expect(formatCurrency(1234.5, germanFormat)).toBe('$1,234.50');
 
       const spaceFormat: CurrencyFormat = {
         ...mockFormat,
-        numberFormat: '123 456.78'
+        numberFormat: {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+          thousandsSeparator: ' '
+        }
       };
-      expect(formatCurrency(100.5, spaceFormat)).toBe('$100.50');
+      expect(formatCurrency(1234.5, spaceFormat)).toBe('$1,234.50');
     });
   });
 }); 

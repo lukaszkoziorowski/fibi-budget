@@ -1,9 +1,8 @@
 import { render, fireEvent, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { configureStore, AnyAction } from '@reduxjs/toolkit';
+import { AnyAction, configureStore } from '@reduxjs/toolkit';
 import CategoryList from '@/components/CategoryList/index';
-import { Category, BudgetState } from '@/types';
-import { CurrencyFormat } from '@/utils/formatters';
+import { Category, CurrencyFormat } from '@/types';
 import { describe, it, expect, beforeEach } from 'vitest';
 
 // Mock the hooks

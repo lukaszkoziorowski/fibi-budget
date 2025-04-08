@@ -1,25 +1,29 @@
 import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { addCategory } from '@/store/budgetSlice';
+import { RootState } from '@/store';
 
 interface AddCategoryModalProps {
   onClose: () => void;
+  groupId?: string; // Optional groupId for pre-selecting a group
 }
 
-export const AddCategoryModal = ({ onClose }: AddCategoryModalProps) => {
+export const AddCategoryModal = ({ onClose, groupId }: AddCategoryModalProps) => {
   const dispatch = useDispatch();
+  const { categoryGroups } = useSelector((state: RootState) => state.budget);
   const [categoryName, setCategoryName] = useState('');
   const [budget, setBudget] = useState('');
+  const [selectedGroupId, setSelectedGroupId] = useState(groupId || categoryGroups[0]?.id || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!categoryName.trim() || !budget) return;
+    if (!categoryName.trim() || !budget || !selectedGroupId) return;
 
     dispatch(
       addCategory({
-        id: Date.now().toString(),
         name: categoryName.trim(),
         budget: Number(budget),
+        groupId: selectedGroupId
       })
     );
 
@@ -57,7 +61,7 @@ export const AddCategoryModal = ({ onClose }: AddCategoryModalProps) => {
               placeholder="Enter category name"
             />
           </div>
-          <div className="mb-6">
+          <div className="mb-4">
             <label htmlFor="budget" className="block text-sm font-medium text-gray-700 mb-1">
               Budget
             </label>
@@ -71,6 +75,23 @@ export const AddCategoryModal = ({ onClose }: AddCategoryModalProps) => {
               min="0"
               step="0.01"
             />
+          </div>
+          <div className="mb-6">
+            <label htmlFor="groupSelect" className="block text-sm font-medium text-gray-700 mb-1">
+              Group
+            </label>
+            <select
+              id="groupSelect"
+              value={selectedGroupId}
+              onChange={(e) => setSelectedGroupId(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent"
+            >
+              {categoryGroups.map(group => (
+                <option key={group.id} value={group.id}>
+                  {group.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="flex justify-end">
             <button

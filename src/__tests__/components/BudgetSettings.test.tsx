@@ -11,12 +11,13 @@ const initialState: BudgetState = {
   currentMonth: '2024-03',
   globalCurrency: 'USD',
   currencyFormat: {
-    currency: 'USD',
-    placement: 'before',
-    numberFormat: {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }
+      currency: 'USD',
+      placement: 'before',
+      numberFormat: {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+      },
+      dateFormat: ''
   },
   balance: 1000,
   budgetName: 'My Budget'
@@ -60,7 +61,7 @@ describe('BudgetSettings', () => {
   it('renders the budget settings form', () => {
     render(
       <Provider store={mockStore}>
-        <BudgetSettings onBack={() => {}} />
+        <BudgetSettings />
       </Provider>
     );
 
@@ -74,7 +75,7 @@ describe('BudgetSettings', () => {
   it('allows changing currency', () => {
     render(
       <Provider store={mockStore}>
-        <BudgetSettings onBack={() => {}} />
+        <BudgetSettings />
       </Provider>
     );
 
@@ -94,7 +95,7 @@ describe('BudgetSettings', () => {
   it('allows changing currency placement', () => {
     render(
       <Provider store={mockStore}>
-        <BudgetSettings onBack={() => {}} />
+        <BudgetSettings />
       </Provider>
     );
 
@@ -113,7 +114,7 @@ describe('BudgetSettings', () => {
   it('allows changing number format', () => {
     render(
       <Provider store={mockStore}>
-        <BudgetSettings onBack={() => {}} />
+        <BudgetSettings />
       </Provider>
     );
 
@@ -135,7 +136,7 @@ describe('BudgetSettings', () => {
   it('allows changing date format', () => {
     render(
       <Provider store={mockStore}>
-        <BudgetSettings onBack={() => {}} />
+        <BudgetSettings />
       </Provider>
     );
 
@@ -151,3 +152,6 @@ describe('BudgetSettings', () => {
     expect(mockStore.getState().budget.currencyFormat.dateFormat).toBe('DD/MM/YYYY');
   });
 }); 
+ 
+ 
+ 

@@ -52,6 +52,7 @@ export const validateCategoryOperation = {
   },
   
   canUpdate: (name: string, budget: string) => {
-    return name.trim() !== '' && !isNaN(Number(budget));
+    const budgetNumber = Number(budget);
+    return name.trim() !== '' && !isNaN(budgetNumber) && budgetNumber >= 0;
   },
 }; 
