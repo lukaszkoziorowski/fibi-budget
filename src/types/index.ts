@@ -12,14 +12,20 @@ export interface CurrencyFormat {
 export interface CategoryGroup {
   id: string;
   name: string;
-  isCollapsed: boolean;
+  isCollapsed?: boolean;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Category {
   id: string;
   name: string;
   budget: number;
-  groupId: string;
+  groupId: string | null;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Transaction {

@@ -1,9 +1,8 @@
 import { render, screen, fireEvent, createEvent, within, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import budgetReducer, { addCategoryGroup, updateCategoryGroup, deleteCategoryGroup, moveCategoryToGroup } from '@/store/budgetSlice';
+import budgetReducer, {  } from '@/store/budgetSlice';
 import CategoryGroups from '@/components/CategoryGroups';
-import { vi } from 'vitest';
 
 describe('CategoryGroups', () => {
   const initialState = {
@@ -40,7 +39,7 @@ describe('CategoryGroups', () => {
   const renderWithProvider = (component: React.ReactNode) => {
     const store = configureStore({
       reducer: {
-        budget: budgetReducer
+        budget: budgetReducer as any // Type assertion to fix type error
       },
       preloadedState: initialState
     });

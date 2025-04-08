@@ -62,8 +62,8 @@ export const CategoryRow = ({
       onDragEnd={onDragEnd}
       onDragOver={onDragOver}
       onDrop={onDrop}
+      className="hover:bg-gray-50"
       onClick={onClick}
-      className="hover:bg-gray-50 cursor-pointer"
     >
       <td className="px-3 py-4 whitespace-nowrap">
         <div className="flex items-center justify-center">

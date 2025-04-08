@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
 import { CategoryRow } from './CategoryRow';
 import { useCurrency } from '@/hooks/useCurrency';
-import { Category, CategoryGroup as CategoryGroupType } from '@/types';
 
 interface CategoryGroupProps {
   groupId: string;
@@ -28,7 +27,7 @@ const CategoryGroup: React.FC<CategoryGroupProps> = ({ groupId }) => {
       type: 'budget/updateCategoryGroup',
       payload: {
         id: groupId,
-        isExpanded: !group?.isExpanded
+        isCollapsed: !group?.isCollapsed
       }
     });
   };
@@ -95,9 +94,9 @@ const CategoryGroup: React.FC<CategoryGroupProps> = ({ groupId }) => {
           >
             <svg
               className={`h-4 w-4 transform transition-transform ${
-                group.isExpanded ? 'rotate-90' : ''
+                group.isCollapsed ? 'rotate-90' : ''
               }`}
-              fill="none"
+              fill="none" 
               stroke="currentColor"
               viewBox="0 0 24 24"
             >
@@ -163,7 +162,7 @@ const CategoryGroup: React.FC<CategoryGroupProps> = ({ groupId }) => {
         </div>
       </div>
 
-      {group.isExpanded && (
+      {!group.isCollapsed && (
         <div className="border border-t-0 rounded-b-lg">
           <table className="min-w-full divide-y divide-gray-200">
             <tbody className="bg-white divide-y divide-gray-200">

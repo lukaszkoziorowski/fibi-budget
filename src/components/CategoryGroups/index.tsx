@@ -47,11 +47,6 @@ const CategoryGroups: React.FC = () => {
   const ungroupedCategories = categories.filter(c => !c.groupId || !categoryGroups.find(g => g.id === c.groupId));
   const validGroups = categoryGroups.filter(group => group.name && group.name.trim() !== '');
 
-  const handleAddGroup = () => {
-    setModalMode('add');
-    setGroupName('');
-    setIsModalOpen(true);
-  };
 
   const handleEditGroup = (id: string, name: string) => {
     setModalMode('edit');
@@ -106,10 +101,6 @@ const CategoryGroups: React.FC = () => {
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
 
   const handleDrop = (e: React.DragEvent, groupId: string) => {
     e.preventDefault();

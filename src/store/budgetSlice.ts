@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { auth } from '../config/firebase';
-import type { CurrencyFormat, BudgetState, Category, Transaction, CategoryGroup } from '@/types';
+import type { CurrencyFormat, BudgetState, Category, Transaction } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 // Load initial state from localStorage if available
@@ -55,19 +55,84 @@ const saveState = (state: BudgetState) => {
 
 export const getDefaultState = (): BudgetState => ({
   categories: [
-    { id: 'news', name: 'News', budget: 0, groupId: '' },
-    { id: 'auto-insurance', name: 'Auto insurance', budget: 0, groupId: '' },
-    { id: 'groceries', name: 'Groceries', budget: 0, groupId: '' },
-    { id: 'gas', name: 'Gas', budget: 0, groupId: '' },
-    { id: 'pet-food', name: 'Pet food', budget: 0, groupId: '' },
-    { id: 'pet-boarding', name: 'Pet boarding', budget: 0, groupId: '' },
-    { id: 'pet-toys', name: 'Pet toys & treats', budget: 0, groupId: '' },
-    { id: 'auto-maintenance', name: 'Auto maintenance', budget: 0, groupId: '' },
-    { id: 'bike-maintenance', name: 'Bike maintenance', budget: 0, groupId: '' },
-    { id: 'taxes', name: 'Taxes or other fees', budget: 0, groupId: '' },
-    { id: 'dining', name: 'Dining out', budget: 0, groupId: '' },
-    { id: 'entertainment', name: 'Entertainment', budget: 0, groupId: '' },
-    { id: 'baby', name: 'Baby', budget: 0, groupId: '' }
+    {
+      id: 'news', name: 'News', budget: 0, groupId: '',
+      userId: '',
+      createdAt: '',
+      updatedAt: ''
+    },
+    {
+      id: 'auto-insurance', name: 'Auto insurance', budget: 0, groupId: '',
+      userId: '',
+      createdAt: '',
+      updatedAt: ''
+    },
+    {
+      id: 'groceries', name: 'Groceries', budget: 0, groupId: '',
+      userId: '',
+      createdAt: '',
+      updatedAt: ''
+    },
+    {
+      id: 'gas', name: 'Gas', budget: 0, groupId: '',
+      userId: '',
+      createdAt: '',
+      updatedAt: ''
+    },
+    {
+      id: 'pet-food', name: 'Pet food', budget: 0, groupId: '',
+      userId: '',
+      createdAt: '',
+      updatedAt: ''
+    },
+    {
+      id: 'pet-boarding', name: 'Pet boarding', budget: 0, groupId: '',
+      userId: '',
+      createdAt: '',
+      updatedAt: ''
+    },
+    {
+      id: 'pet-toys', name: 'Pet toys & treats', budget: 0, groupId: '',
+      userId: '',
+      createdAt: '',
+      updatedAt: ''
+    },
+    {
+      id: 'auto-maintenance', name: 'Auto maintenance', budget: 0, groupId: '',
+      userId: '',
+      createdAt: '',
+      updatedAt: ''
+    },
+    {
+      id: 'bike-maintenance', name: 'Bike maintenance', budget: 0, groupId: '',
+      userId: '',
+      createdAt: '',
+      updatedAt: ''
+    },
+    {
+      id: 'taxes', name: 'Taxes or other fees', budget: 0, groupId: '',
+      userId: '',
+      createdAt: '',
+      updatedAt: ''
+    },
+    {
+      id: 'dining', name: 'Dining out', budget: 0, groupId: '',
+      userId: '',
+      createdAt: '',
+      updatedAt: ''
+    },
+    {
+      id: 'entertainment', name: 'Entertainment', budget: 0, groupId: '',
+      userId: '',
+      createdAt: '',
+      updatedAt: ''
+    },
+    {
+      id: 'baby', name: 'Baby', budget: 0, groupId: '',
+      userId: '',
+      createdAt: '',
+      updatedAt: ''
+    }
   ],
   categoryGroups: [],
   transactions: [],
@@ -100,7 +165,10 @@ const budgetSlice = createSlice({
     addCategory: (state, action: PayloadAction<{ name: string; budget: number; groupId: string }>) => {
       state.categories.push({
         id: uuidv4(),
-        ...action.payload
+        ...action.payload,
+        userId: '',
+        createdAt: '',
+        updatedAt: ''
       });
       saveState(state);
     },
@@ -229,7 +297,10 @@ const budgetSlice = createSlice({
       state.categoryGroups.push({
         id: uuidv4(),
         name: action.payload.name,
-        isCollapsed: false
+        isCollapsed: false,
+        userId: '',
+        createdAt: '',
+        updatedAt: ''
       });
       saveState(state);
     },

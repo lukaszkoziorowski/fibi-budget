@@ -1,194 +1,198 @@
-import { render, fireEvent, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { configureStore, AnyAction } from '@reduxjs/toolkit';
+import { configureStore } from '@reduxjs/toolkit';
+import { vi } from 'vitest';
 import Dashboard from '@/components/Dashboard';
-import { Category, Transaction, CurrencyFormat, BudgetState } from '@/types';
+import budgetReducer from '@/store/budgetSlice';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { BudgetState } from '@/types';
 
-// Mock the hooks
-jest.mock('@/hooks/useCurrency', () => ({
-  useCurrency: () => ({
-    currencyFormat: {
-      currency: 'USD',
-      placement: 'before',
-      numberFormat: '123,456.78'
-    },
-    currencySymbol: '$'
+// Mock Firebase auth
+vi.mock('firebase/auth', () => ({
+  getAuth: vi.fn(),
+  onAuthStateChanged: vi.fn((_auth, callback) => {
+    callback(null);
+    return vi.fn();
   })
 }));
 
-jest.mock('@/hooks/useExchangeRates', () => ({
-  useExchangeRates: () => ({
-    convertAmount: (amount: number) => amount
-  })
-}));
-
-jest.mock('@/hooks/useBudgetStats', () => ({
-  useBudgetStats: () => ({
-    totalBudget: 1500,
-    totalSpent: 800,
-    totalRemaining: 700,
-    percentUsed: 53.33
-  })
-}));
-
-const mockCategories: Category[] = [
-  { id: '1', name: 'Food', budget: 1000 },
-  { id: '2', name: 'Transport', budget: 500 }
-];
-
-const mockTransactions: Transaction[] = [
-  {
-    id: '1',
-    amount: -500,
-    categoryId: '1',
-    description: 'Groceries',
-    date: '2024-03-15',
-    type: 'expense',
-    currency: 'USD'
-  },
-  {
-    id: '2',
-    amount: -300,
-    categoryId: '2',
-    description: 'Bus ticket',
-    date: '2024-03-14',
-    type: 'expense',
-    currency: 'USD'
-  }
-];
-
-const mockCurrencyFormat: CurrencyFormat = {
-  currency: 'USD',
-  placement: 'before',
-  numberFormat: {
+// Mock formatters
+vi.mock('@/utils/formatters', () => ({
+  formatCurrency: (amount: number) => `$${amount.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  }
-};
+  })}`
+}));
 
-const initialState: BudgetState = {
-  categories: mockCategories,
-  transactions: mockTransactions,
-  currentMonth: '2024-03',
-  globalCurrency: 'USD',
-  currencyFormat: mockCurrencyFormat,
-  balance: 1000
-};
+// Mock the hooks
+vi.mock('@/hooks/useCurrency', () => ({
+  useCurrency: () => ({
+    currencyFormat: {
+      symbol: '$',
+      decimal: '.',
+      thousands: ',',
+      precision: 2,
+      format: '%s%v'
+    }
+  })
+}));
+
+vi.mock('@/hooks/useBudgetStats', () => ({
+  useBudgetStats: () => ({
+    assignedTotal: 5000,
+    availableToAssign: 1000,
+    totalTransactions: 10,
+    totalExpenses: 4000
+  })
+}));
+
+// Mock the CategoryGroups component
+vi.mock('@/components/CategoryGroups', () => ({
+  default: () => <div data-testid="category-groups" />
+}));
+
+// Mock the AddTransactionModal component
+vi.mock('@/components/AddTransactionModal', () => ({
+  default: () => <div data-testid="add-transaction-modal" />
+}));
 
 describe('Dashboard', () => {
-  const mockStore = configureStore({
-    reducer: {
-      budget: (state: BudgetState = initialState) => state
-    }
-  });
+  const createTestStore = () => {
+    const initialState: BudgetState = {
+      categories: [],
+      categoryGroups: [],
+      transactions: [],
+      currentMonth: '2024-04-01T00:00:00.000Z',
+      globalCurrency: 'USD',
+      currencyFormat: {
+        currency: 'USD',
+        locale: 'en-US',
+        placement: 'before',
+        numberFormat: {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        },
+        dateFormat: 'MM/DD/YYYY'
+      },
+      balance: 0,
+      budgetName: 'My Budget'
+    };
 
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('renders the dashboard header', () => {
-    render(
-      <Provider store={mockStore}>
-        <Dashboard />
-      </Provider>
-    );
-
-    expect(screen.getByText('Budget Overview')).toBeInTheDocument();
-    expect(screen.getByText('March 2024')).toBeInTheDocument();
-  });
-
-  it('displays budget statistics', () => {
-    render(
-      <Provider store={mockStore}>
-        <Dashboard />
-      </Provider>
-    );
-
-    expect(screen.getByText('$1,500.00')).toBeInTheDocument(); // Total budget
-    expect(screen.getByText('$800.00')).toBeInTheDocument(); // Total spent
-    expect(screen.getByText('$700.00')).toBeInTheDocument(); // Total remaining
-    expect(screen.getByText('53.33%')).toBeInTheDocument(); // Percent used
-  });
-
-  it('renders category list', () => {
-    render(
-      <Provider store={mockStore}>
-        <Dashboard />
-      </Provider>
-    );
-
-    expect(screen.getByText('Categories')).toBeInTheDocument();
-    expect(screen.getByText('Food')).toBeInTheDocument();
-    expect(screen.getByText('Transport')).toBeInTheDocument();
-  });
-
-  it('renders transaction list', () => {
-    render(
-      <Provider store={mockStore}>
-        <Dashboard />
-      </Provider>
-    );
-
-    expect(screen.getByText('Recent Transactions')).toBeInTheDocument();
-    expect(screen.getByText('Groceries')).toBeInTheDocument();
-    expect(screen.getByText('Bus ticket')).toBeInTheDocument();
-  });
-
-  it('opens add category modal', () => {
-    render(
-      <Provider store={mockStore}>
-        <Dashboard />
-      </Provider>
-    );
-
-    const addCategoryButton = screen.getByRole('button', { name: /add category/i });
-    fireEvent.click(addCategoryButton);
-
-    expect(screen.getByText('Add New Category')).toBeInTheDocument();
-  });
-
-  it('opens add transaction modal', () => {
-    render(
-      <Provider store={mockStore}>
-        <Dashboard />
-      </Provider>
-    );
-
-    const addTransactionButton = screen.getByRole('button', { name: /add transaction/i });
-    fireEvent.click(addTransactionButton);
-
-    expect(screen.getByText('Add Transaction')).toBeInTheDocument();
-  });
-
-  it('handles month navigation', () => {
-    const store = configureStore({
+    return configureStore({
       reducer: {
-        budget: (state: BudgetState = initialState, action: AnyAction): BudgetState => {
-          if (action.type === 'budget/setCurrentMonth') {
-            return {
-              ...state,
-              currentMonth: action.payload
-            };
-          }
-          return state;
-        }
+        budget: budgetReducer
+      },
+      preloadedState: {
+        budget: initialState
       }
     });
+  };
 
-    render(
+  const renderDashboard = () => {
+    const store = createTestStore();
+    return render(
       <Provider store={store}>
-        <Dashboard />
+        <AuthProvider>
+          <Dashboard />
+        </AuthProvider>
       </Provider>
     );
+  };
 
-    // Navigate to previous month
-    const prevMonthButton = screen.getByRole('button', { name: /previous month/i });
-    fireEvent.click(prevMonthButton);
-    expect(store.getState().budget.currentMonth).toBe('2024-02');
+  it('renders all dashboard cards with correct information', () => {
+    renderDashboard();
 
-    // Navigate to next month
-    const nextMonthButton = screen.getByRole('button', { name: /next month/i });
-    fireEvent.click(nextMonthButton);
-    expect(store.getState().budget.currentMonth).toBe('2024-03');
+    // Check Ready to Assign card
+    expect(screen.getByText('Ready to Assign')).toBeInTheDocument();
+    expect(screen.getByText('$1,000.00')).toBeInTheDocument();
+
+    // Check Monthly Budget card
+    expect(screen.getByText('Monthly Budget')).toBeInTheDocument();
+    expect(screen.getByText('$5,000.00')).toBeInTheDocument();
+
+    // Check Total Transactions card
+    expect(screen.getByText('Total Transactions')).toBeInTheDocument();
+    expect(screen.getByText('10')).toBeInTheDocument();
+
+    // Check Total Expenses card
+    expect(screen.getByText('Total Expenses')).toBeInTheDocument();
+    expect(screen.getByText('$4,000.00')).toBeInTheDocument();
+  });
+
+  it('renders month selector with correct month', () => {
+    renderDashboard();
+    expect(screen.getByText('April 2024')).toBeInTheDocument();
+  });
+
+  it('handles month navigation correctly', () => {
+    renderDashboard();
+    
+    // Click previous month button
+    fireEvent.click(screen.getByLabelText('Previous month'));
+    expect(screen.getByText('March 2024')).toBeInTheDocument();
+
+    // Click next month button
+    fireEvent.click(screen.getByLabelText('Next month'));
+    expect(screen.getByText('April 2024')).toBeInTheDocument();
+  });
+
+  it('opens add transaction modal when clicking add transaction button', () => {
+    renderDashboard();
+    fireEvent.click(screen.getByText('Add Transaction'));
+    expect(screen.getByTestId('add-transaction-modal')).toBeInTheDocument();
+  });
+
+  it('opens add group modal when clicking add group button', async () => {
+    renderDashboard();
+    const addGroupButton = screen.getByRole('button', { name: 'Add Group' });
+    fireEvent.click(addGroupButton);
+    
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: 'Add Group' })).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Enter group name')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Add Group' })).toBeInTheDocument();
+      // Cancel button should not exist
+      expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('closes add group modal when clicking X button', async () => {
+    renderDashboard();
+    const addGroupButton = screen.getByRole('button', { name: 'Add Group' });
+    fireEvent.click(addGroupButton);
+    
+    const closeButton = await screen.findByRole('button', { name: 'Close' });
+    fireEvent.click(closeButton);
+    
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: 'Add Group' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('adds a new group when submitting the form', async () => {
+    renderDashboard();
+    const addGroupButton = screen.getByRole('button', { name: 'Add Group' });
+    fireEvent.click(addGroupButton);
+    
+    const input = await screen.findByPlaceholderText('Enter group name');
+    fireEvent.change(input, { target: { value: 'Test Group' } });
+    
+    const addButton = screen.getByRole('button', { name: 'Add Group' });
+    fireEvent.click(addButton);
+    
+    await waitFor(() => {
+      expect(screen.queryByRole('heading', { name: 'Add Group' })).not.toBeInTheDocument();
+    });
+  });
+
+  it('handles responsive layout correctly', () => {
+    renderDashboard();
+    
+    // Check if cards are in a responsive grid
+    const cardsContainer = screen.getByTestId('dashboard-cards');
+    expect(cardsContainer).toHaveClass('grid-cols-1');
+    expect(cardsContainer).toHaveClass('sm:grid-cols-2');
+    expect(cardsContainer).toHaveClass('lg:grid-cols-4');
   });
 }); 
