@@ -1,26 +1,42 @@
-export interface Account {
-  id: string;
-  name: string;
-  type: 'checking' | 'savings' | 'credit' | 'cash';
-  balance: number;
-  currency: string;
-  color: string;
-  isHidden: boolean;
-}
+export type AccountType = 
+  | 'checking'
+  | 'savings'
+  | 'creditCard'
+  | 'cash'
+  | 'lineOfCredit'
+  | 'investment'
+  | 'other';
 
-export interface AccountTransaction {
+export interface Transaction {
   id: string;
   accountId: string;
   amount: number;
-  type: 'income' | 'expense';
-  description: string;
   date: string;
-  categoryId: string;
+  description: string;
+  categoryId?: string;
+  userId: string;
+  isReconciled: boolean;
+  memo?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface AccountBalance {
-  accountId: string;
+export interface Account {
+  id: string;
+  name: string;
+  type: AccountType;
   balance: number;
-  currency: string;
-  lastUpdated: string;
+  institutionName?: string;
+  userId: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AccountState {
+  accounts: Account[];
+  transactions: Transaction[];
+  isLoading: boolean;
+  error: string | null;
+  activeAccountId: string | null;
 } 

@@ -9,12 +9,28 @@ export interface Account {
   currency: string;
   color: string;
   isHidden: boolean;
+  notes?: string | null;
   createdAt: string;
+  updatedAt: string;
+}
+
+export interface Transaction {
+  id: string;
+  accountId: string;
+  amount: number;
+  currency: string;
+  date: string;
+  description: string;
+  type: 'debit' | 'credit';
+  isReconciled: boolean;
+  categoryId: string | null;
+  memo: string | null;
 }
 
 interface AccountsState {
   accounts: Account[];
   activeAccountId: string | null;
+  transactions: Transaction[];
 }
 
 // Load state from localStorage
@@ -43,6 +59,7 @@ const loadState = (): AccountsState => {
       }
     ],
     activeAccountId: null,
+    transactions: [],
   };
 };
 

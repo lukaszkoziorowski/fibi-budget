@@ -25,7 +25,6 @@ interface CategoryRowProps {
   onUpdate: () => void;
   onCancelEdit: () => void;
   onDelete: () => void;
-  onClick?: () => void;
 }
 
 export const CategoryRow = ({
@@ -47,8 +46,7 @@ export const CategoryRow = ({
   onEditingBudgetChange,
   onUpdate,
   onCancelEdit,
-  onDelete,
-  onClick
+  onDelete
 }: CategoryRowProps) => {
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -63,7 +61,6 @@ export const CategoryRow = ({
       onDragOver={onDragOver}
       onDrop={onDrop}
       className="hover:bg-gray-50"
-      onClick={onClick}
     >
       <td className="px-3 py-4 whitespace-nowrap">
         <div className="flex items-center justify-center">

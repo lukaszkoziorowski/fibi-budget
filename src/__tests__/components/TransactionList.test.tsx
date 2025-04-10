@@ -1,187 +1,130 @@
-import { render, fireEvent, screen } from '@testing-library/react';
+import React from 'react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { configureStore, AnyAction } from '@reduxjs/toolkit';
-import TransactionList from '@/components/TransactionList';
-import { Category, Transaction, CurrencyFormat, BudgetState } from '@/types';
-
-// Mock the hooks
-jest.mock('@/hooks/useCurrency', () => ({
-  useCurrency: () => ({
-    currencyFormat: {
-      currency: 'USD',
-      placement: 'before',
-      numberFormat: '123,456.78'
-    },
-    currencySymbol: '$'
-  })
-}));
-
-jest.mock('@/hooks/useExchangeRates', () => ({
-  useExchangeRates: () => ({
-    convertAmount: (amount: number) => amount
-  })
-}));
-
-const mockCategories: Category[] = [
-  { id: '1', name: 'Food', budget: 1000 },
-  { id: '2', name: 'Transport', budget: 500 }
-];
+import { configureStore } from '@reduxjs/toolkit';
+import TransactionList from '../../components/Accounts/TransactionList';
+import accountReducer from '../../store/accountSlice';
+import { Transaction } from '../../types/account';
 
 const mockTransactions: Transaction[] = [
   {
     id: '1',
-    amount: -50,
-    categoryId: '1',
-    description: 'Groceries',
-    date: '2024-03-15',
-    type: 'expense',
-    currency: 'USD'
+    accountId: 'account1',
+    amount: 100,
+    description: 'Salary',
+    date: '2024-01-01',
+    userId: 'user1',
+    createdAt: '2024-01-01T00:00:00.000Z',
+    updatedAt: '2024-01-01T00:00:00.000Z',
   },
   {
     id: '2',
-    amount: -30,
-    categoryId: '2',
-    description: 'Bus ticket',
-    date: '2024-03-14',
-    type: 'expense',
-    currency: 'USD'
-  }
+    accountId: 'account1',
+    amount: -50,
+    description: 'Groceries',
+    date: '2024-01-02',
+    userId: 'user1',
+    createdAt: '2024-01-02T00:00:00.000Z',
+    updatedAt: '2024-01-02T00:00:00.000Z',
+  },
 ];
 
-const mockCurrencyFormat: CurrencyFormat = {
-  currency: 'USD',
-  placement: 'before',
-  numberFormat: {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }
-};
-
-const initialState: BudgetState = {
-  categories: mockCategories,
-  transactions: mockTransactions,
-  currentMonth: '2024-03',
-  globalCurrency: 'USD',
-  currencyFormat: mockCurrencyFormat,
-  balance: 0
-};
-
-describe('TransactionList', () => {
-  const mockStore = configureStore({
+const renderWithProvider = (component: React.ReactElement) => {
+  const store = configureStore({
     reducer: {
-      budget: (state: BudgetState = initialState) => state
-    }
+      accounts: accountReducer,
+    },
+    preloadedState: {
+      accounts: {
+        accounts: [],
+        transactions: mockTransactions,
+        isLoading: false,
+        error: null,
+      },
+    },
   });
 
+  return render(
+    <Provider store={store}>
+      {component}
+    </Provider>
+  );
+};
+
+describe('TransactionList Component', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('renders the transaction list', () => {
-    render(
-      <Provider store={mockStore}>
-        <TransactionList />
-      </Provider>
-    );
-
-    // Check for table headers
-    expect(screen.getByText('Date')).toBeInTheDocument();
-    expect(screen.getByText('Description')).toBeInTheDocument();
-    expect(screen.getByText('Category')).toBeInTheDocument();
-    expect(screen.getByText('Amount')).toBeInTheDocument();
-
-    // Check for transaction data
-    expect(screen.getByText('Groceries')).toBeInTheDocument();
-    expect(screen.getByText('Bus ticket')).toBeInTheDocument();
-    expect(screen.getByText('Food')).toBeInTheDocument();
-    expect(screen.getByText('Transport')).toBeInTheDocument();
-    expect(screen.getByText('-$50.00')).toBeInTheDocument();
-    expect(screen.getByText('-$30.00')).toBeInTheDocument();
-  });
-
-  it('handles editing a transaction', () => {
-    const store = configureStore({
-      reducer: {
-        budget: (state: BudgetState = initialState, action: AnyAction): BudgetState => {
-          if (action.type === 'budget/updateTransaction') {
-            return {
-              ...state,
-              transactions: state.transactions.map(t =>
-                t.id === action.payload.id ? action.payload : t
-              )
-            };
-          }
-          return state;
-        }
-      }
-    });
-
-    render(
-      <Provider store={store}>
-        <TransactionList />
-      </Provider>
-    );
-
-    // Find and click description button for first transaction
-    const descriptionButton = screen.getByText('Groceries');
-    fireEvent.click(descriptionButton);
-
-    // Update transaction description
-    const descriptionInput = screen.getByDisplayValue('Groceries');
-    fireEvent.change(descriptionInput, { target: { value: 'Supermarket' } });
-    fireEvent.keyDown(descriptionInput, { key: 'Enter' });
-
-    // Check if transaction was updated
-    const updatedTransaction = store.getState().budget.transactions.find(t => t.id === '1');
-    expect(updatedTransaction?.description).toBe('Supermarket');
-  });
-
-  it('sorts transactions by date', () => {
-    render(
-      <Provider store={mockStore}>
-        <TransactionList />
-      </Provider>
-    );
-
-    // Get all date cells
-    const dateCells = screen.getAllByText(/Mar \d{1,2}, 2024/);
+  it('renders transactions correctly', () => {
+    renderWithProvider(<TransactionList accountId="account1" />);
     
-    // Check if dates are in descending order
-    const dates = dateCells.map(cell => cell.textContent);
-    expect(dates[0]).toBe('Mar 15, 2024');
-    expect(dates[1]).toBe('Mar 14, 2024');
+    expect(screen.getByText('Salary')).toBeInTheDocument();
+    expect(screen.getByText('Groceries')).toBeInTheDocument();
+    expect(screen.getByText('$100.00')).toBeInTheDocument();
+    expect(screen.getByText('-$50.00')).toBeInTheDocument();
   });
 
-  it('filters transactions by current month', () => {
-    const storeWithOldTransaction = configureStore({
-      reducer: {
-        budget: () => ({
-          ...initialState,
-          transactions: [
-            ...mockTransactions,
-            {
-              id: '3',
-              amount: -100,
-              categoryId: '1',
-              description: 'Old transaction',
-              date: '2024-02-15',
-              type: 'expense',
-              currency: 'USD'
-            }
-          ]
-        })
-      }
+  it('shows add transaction form when button is clicked', () => {
+    renderWithProvider(<TransactionList accountId="account1" />);
+    
+    const addButton = screen.getByText('+ Add Transaction');
+    fireEvent.click(addButton);
+    
+    expect(screen.getByLabelText('Amount')).toBeInTheDocument();
+    expect(screen.getByLabelText('Description')).toBeInTheDocument();
+    expect(screen.getByLabelText('Date')).toBeInTheDocument();
+  });
+
+  it('adds new transaction when form is submitted', async () => {
+    renderWithProvider(<TransactionList accountId="account1" />);
+    
+    const addButton = screen.getByText('+ Add Transaction');
+    fireEvent.click(addButton);
+    
+    fireEvent.change(screen.getByLabelText('Amount'), {
+      target: { value: '75' },
     });
+    
+    fireEvent.change(screen.getByLabelText('Description'), {
+      target: { value: 'New Transaction' },
+    });
+    
+    const submitButton = screen.getByRole('button', { name: /add/i });
+    fireEvent.click(submitButton);
+    
+    await waitFor(() => {
+      expect(screen.getByText('New Transaction')).toBeInTheDocument();
+      expect(screen.getByText('$75.00')).toBeInTheDocument();
+    });
+  });
 
-    render(
-      <Provider store={storeWithOldTransaction}>
-        <TransactionList />
-      </Provider>
-    );
+  it('deletes transaction when confirmed', async () => {
+    const mockConfirm = jest.spyOn(window, 'confirm');
+    mockConfirm.mockImplementation(() => true);
+    
+    renderWithProvider(<TransactionList accountId="account1" />);
+    
+    const deleteButtons = screen.getAllByRole('button', { name: /delete/i });
+    fireEvent.click(deleteButtons[0]);
+    
+    await waitFor(() => {
+      expect(screen.queryByText('Salary')).not.toBeInTheDocument();
+    });
+    
+    mockConfirm.mockRestore();
+  });
 
-    // Should only show current month's transactions
-    expect(screen.queryByText('Old transaction')).not.toBeInTheDocument();
-    expect(screen.getByText('Groceries')).toBeInTheDocument();
-    expect(screen.getByText('Bus ticket')).toBeInTheDocument();
+  it('validates required fields in add transaction form', () => {
+    renderWithProvider(<TransactionList accountId="account1" />);
+    
+    const addButton = screen.getByText('+ Add Transaction');
+    fireEvent.click(addButton);
+    
+    const submitButton = screen.getByRole('button', { name: /add/i });
+    fireEvent.click(submitButton);
+    
+    expect(screen.getByLabelText('Amount')).toBeInvalid();
+    expect(screen.getByLabelText('Description')).toBeInvalid();
   });
 }); 

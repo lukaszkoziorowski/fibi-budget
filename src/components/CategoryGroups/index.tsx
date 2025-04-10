@@ -8,7 +8,8 @@ import {
   toggleGroupCollapse,
   moveCategoryToGroup,
   updateCategory,
-  deleteCategory
+  deleteCategory,
+  reorderCategories
 } from '@/store/budgetSlice';
 import { Category } from '@/types';
 import { CategoryRow } from '../CategoryList/CategoryRow';
@@ -101,17 +102,49 @@ const CategoryGroups: React.FC = () => {
     }
   };
 
-
-  const handleDrop = (e: React.DragEvent, groupId: string) => {
+  const handleDrop = (e: React.DragEvent, groupId: string, targetCategoryId?: string) => {
     e.preventDefault();
-    if (draggedCategoryId) {
-      const category = categories.find(c => c.id === draggedCategoryId);
-      if (category && category.groupId !== groupId) {
-        dispatch(moveCategoryToGroup({ categoryId: draggedCategoryId, groupId }));
-      }
-      setDraggedCategoryId(null);
+    if (!draggedCategoryId) return;
+
+    const draggedCategory = categories.find(c => c.id === draggedCategoryId);
+    if (!draggedCategory) return;
+
+    // If dropping on a category within the same group, reorder
+    if (targetCategoryId && draggedCategory.groupId === groupId) {
+      const groupCategories = categories.filter(c => c.groupId === groupId);
+      const otherCategories = categories.filter(c => c.groupId !== groupId);
+      
+      const draggedIndex = groupCategories.findIndex(c => c.id === draggedCategoryId);
+      const targetIndex = groupCategories.findIndex(c => c.id === targetCategoryId);
+      
+      if (draggedIndex === -1 || targetIndex === -1) return;
+      
+      // Create a new array with the reordered categories
+      const newGroupCategories = [...groupCategories];
+      const [movedCategory] = newGroupCategories.splice(draggedIndex, 1);
+      
+      // Adjust target index if we're moving an item down
+      const adjustedTargetIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+      newGroupCategories.splice(adjustedTargetIndex, 0, movedCategory);
+      
+      // Combine reordered group categories with other categories
+      const allCategories = [...otherCategories];
+      allCategories.push(...newGroupCategories);
+      
+      dispatch(reorderCategories(allCategories));
+    } else {
+      // If dropping on a group, move the category to that group
+      dispatch(moveCategoryToGroup({ categoryId: draggedCategoryId, groupId }));
     }
+    
+    setDraggedCategoryId(null);
   };
+
+  const handleEditCategory = useCallback((category: Category) => {
+    setEditingCategoryId(category.id);
+    setEditingCategoryName(category.name);
+    setEditingCategoryBudget(category.budget.toString());
+  }, []);
 
   const handleUpdateCategory = useCallback((id: string) => {
     const category = categories.find((c) => c.id === id);
@@ -126,12 +159,12 @@ const CategoryGroups: React.FC = () => {
     setEditingCategoryId(null);
     setEditingCategoryName('');
     setEditingCategoryBudget('');
-  }, [categories, dispatch, editingCategoryBudget, editingCategoryName]);
+  }, [categories, dispatch, editingCategoryName, editingCategoryBudget]);
 
-  const handleEditCategory = useCallback((category: Category) => {
-    setEditingCategoryId(category.id);
-    setEditingCategoryName(category.name);
-    setEditingCategoryBudget(category.budget.toString());
+  const handleCancelEdit = useCallback(() => {
+    setEditingCategoryId(null);
+    setEditingCategoryName('');
+    setEditingCategoryBudget('');
   }, []);
 
   const handleDeleteCategory = useCallback((id: string) => {
@@ -242,19 +275,16 @@ const CategoryGroups: React.FC = () => {
                     );
                     const remaining = category.budget - activity;
                     const percentUsed = category.budget > 0 ? Math.min((activity / category.budget) * 100, 100) : 0;
-                    
                     const progressClass = remaining < 0 
                       ? "bg-red-500" 
                       : remaining < 0.2 * category.budget 
                         ? "bg-yellow-500" 
                         : "bg-green-500";
-                    
                     const textColorClass = remaining < 0 
                       ? "text-red-600" 
                       : remaining < 0.2 * category.budget 
                         ? "text-yellow-600" 
                         : "text-green-600";
-
                     const isEditing = editingCategoryId === category.id;
 
                     return (
@@ -275,15 +305,11 @@ const CategoryGroups: React.FC = () => {
                         onDragStart={(e) => handleDragStart(e, category.id)}
                         onDragEnd={handleDragEnd}
                         onDragOver={(e) => e.preventDefault()}
-                        onDrop={(e) => e.preventDefault()}
+                        onDrop={(e) => handleDrop(e, '', category.id)}
                         onEditingNameChange={setEditingCategoryName}
                         onEditingBudgetChange={setEditingCategoryBudget}
                         onUpdate={() => handleUpdateCategory(category.id)}
-                        onCancelEdit={() => {
-                          setEditingCategoryId(null);
-                          setEditingCategoryName('');
-                          setEditingCategoryBudget('');
-                        }}
+                        onCancelEdit={handleCancelEdit}
                         onDelete={() => handleDeleteCategory(category.id)}
                         onClick={() => {
                           if (!isEditing) {
@@ -364,26 +390,9 @@ const CategoryGroups: React.FC = () => {
               </div>
 
               {!group.isCollapsed && (
-                <div className="p-4">
-                  <table className="min-w-full">
-                    <thead>
-                      <tr>
-                        <th className="w-10"></th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Name
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Assigned
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Activity
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Remaining
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                <div className="border border-t-0 rounded-b-lg">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <tbody className="bg-white divide-y divide-gray-200">
                       {groupCategories.map((category) => {
                         const activity = calculateCategoryActivity(
                           category.id,
@@ -393,19 +402,8 @@ const CategoryGroups: React.FC = () => {
                         );
                         const remaining = category.budget - activity;
                         const percentUsed = category.budget > 0 ? Math.min((activity / category.budget) * 100, 100) : 0;
-                        
-                        const progressClass = remaining < 0 
-                          ? "bg-red-500" 
-                          : remaining < 0.2 * category.budget 
-                            ? "bg-yellow-500" 
-                            : "bg-green-500";
-                        
-                        const textColorClass = remaining < 0 
-                          ? "text-red-600" 
-                          : remaining < 0.2 * category.budget 
-                            ? "text-yellow-600" 
-                            : "text-green-600";
-
+                        const progressClass = percentUsed >= 100 ? 'bg-red-500' : 'bg-green-500';
+                        const textColorClass = percentUsed >= 100 ? 'text-red-600' : 'text-green-600';
                         const isEditing = editingCategoryId === category.id;
 
                         return (
@@ -425,16 +423,16 @@ const CategoryGroups: React.FC = () => {
                             textColorClass={textColorClass}
                             onDragStart={(e) => handleDragStart(e, category.id)}
                             onDragEnd={handleDragEnd}
-                            onDragOver={(e) => e.preventDefault()}
-                            onDrop={(e) => e.preventDefault()}
+                            onDragOver={(e) => {
+                              e.preventDefault();
+                              e.currentTarget.classList.add('bg-blue-50');
+                              e.dataTransfer.dropEffect = 'move';
+                            }}
+                            onDrop={(e) => handleDrop(e, group.id, category.id)}
                             onEditingNameChange={setEditingCategoryName}
                             onEditingBudgetChange={setEditingCategoryBudget}
                             onUpdate={() => handleUpdateCategory(category.id)}
-                            onCancelEdit={() => {
-                              setEditingCategoryId(null);
-                              setEditingCategoryName('');
-                              setEditingCategoryBudget('');
-                            }}
+                            onCancelEdit={handleCancelEdit}
                             onDelete={() => handleDeleteCategory(category.id)}
                             onClick={() => {
                               if (!isEditing) {

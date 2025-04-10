@@ -1,58 +1,39 @@
-import { Transaction, Category } from '@/store/budgetSlice';
+import { Transaction } from '@/types';
 
-export const calculateCategoryActivity = (
+export const calculateCategoryActivity = async (
   categoryId: string,
   transactions: Transaction[],
   currentMonth: string,
-  convertAmount: (amount: number, currency: string) => number
-) => {
-  const currentMonthDate = new Date(currentMonth);
-  return transactions
-    .filter((t) => {
-      const transactionDate = new Date(t.date);
-      return t.categoryId === categoryId && 
-             t.type === 'expense' &&
-             transactionDate.getMonth() === currentMonthDate.getMonth() &&
-             transactionDate.getFullYear() === currentMonthDate.getFullYear();
-    })
-    .reduce((sum, t) => {
-      let amount = Math.abs(t.amount);
-      
-      // If the transaction has an original amount and currency
-      if (t.originalAmount && t.originalCurrency) {
-        amount = Math.abs(convertAmount(t.originalAmount, t.originalCurrency));
-      }
-      
-      return sum + amount;
-    }, 0);
-};
+  convertAmount: (amount: number, fromCurrency?: string) => Promise<number>
+): Promise<number> => {
+  const startOfMonth = new Date(currentMonth);
+  const endOfMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0);
 
-export const calculateTotalExpenses = (
-  transactions: Transaction[],
-  convertAmount: (amount: number, currency: string) => number
-) => {
-  return transactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => {
-      let amount = Math.abs(t.amount);
-      if (t.originalAmount && t.originalCurrency) {
-        amount = Math.abs(convertAmount(t.originalAmount, t.originalCurrency));
-      }
-      return sum + amount;
-    }, 0);
-};
+  const filteredTransactions = transactions.filter(transaction => {
+    const transactionDate = new Date(transaction.date);
+    return (
+      transaction.categoryId === categoryId &&
+      transactionDate >= startOfMonth &&
+      transactionDate <= endOfMonth
+    );
+  });
 
-export const calculateAssignedTotal = (categories: Category[]) => {
-  return categories.reduce((sum, category) => sum + category.budget, 0);
+  let total = 0;
+  for (const transaction of filteredTransactions) {
+    total += await convertAmount(transaction.amount, transaction.currency);
+  }
+
+  return total;
 };
 
 export const validateCategoryOperation = {
-  canDelete: (categoryId: string, transactions: Transaction[]) => {
-    return !transactions.some((t) => t.categoryId === categoryId);
+  canUpdate: (name: string, budget: string): boolean => {
+    if (!name.trim()) return false;
+    const budgetNum = Number(budget);
+    return !isNaN(budgetNum) && budgetNum >= 0;
   },
-  
-  canUpdate: (name: string, budget: string) => {
-    const budgetNumber = Number(budget);
-    return name.trim() !== '' && !isNaN(budgetNumber) && budgetNumber >= 0;
-  },
+
+  canDelete: (categoryId: string, transactions: Transaction[]): boolean => {
+    return !transactions.some(transaction => transaction.categoryId === categoryId);
+  }
 }; 

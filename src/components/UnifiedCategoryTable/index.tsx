@@ -1,13 +1,25 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
-import { toggleGroupCollapse, moveCategoryToGroup, addCategoryGroup, updateCategoryGroup, deleteCategoryGroup, addCategory, deleteCategory } from '@/store/budgetSlice';
+import { toggleGroupCollapse, moveCategoryToGroup, addCategoryGroup, updateCategoryGroup, deleteCategoryGroup, addCategory, deleteCategory, updateCategory } from '@/store/budgetSlice';
 import { ChevronDownIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '@/hooks/useAuth';
 import { useCurrency } from '@/hooks/useCurrency';
 import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { calculateCategoryActivity } from '@/utils/categoryUtils';
 import { Dialog } from '@headlessui/react';
+import { formatCurrency, parseCurrency } from '@/utils/formatters';
+import { CurrencyFormat } from '@/types';
+
+interface EditingCell {
+  categoryId: string;
+  field: 'name' | 'budget';
+}
+
+interface CategoryActivity {
+  id: string;
+  activity: number;
+}
 
 export const UnifiedCategoryTable: React.FC = () => {
   const dispatch = useDispatch();
@@ -26,6 +38,39 @@ export const UnifiedCategoryTable: React.FC = () => {
   const [categoryName, setCategoryName] = useState('');
   const [categoryBudget, setCategoryBudget] = useState('');
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  
+  // State for inline editing
+  const [editingCell, setEditingCell] = useState<EditingCell | null>(null);
+  const [editValue, setEditValue] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Focus the input when editing starts
+  useEffect(() => {
+    if (editingCell && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editingCell]);
+
+  // Load category activities
+  const [categoryActivities, setCategoryActivities] = useState<CategoryActivity[]>([]);
+  useEffect(() => {
+    const loadActivities = async () => {
+      const activities = await Promise.all(
+        categories.map(async (category) => ({
+          id: category.id,
+          activity: await calculateCategoryActivity(
+            category.id,
+            transactions,
+            currentMonth,
+            convertAmount
+          )
+        }))
+      );
+      setCategoryActivities(activities);
+    };
+
+    loadActivities();
+  }, [categories, transactions, currentMonth, convertAmount]);
 
   const handleAddCategory = useCallback((groupId: string) => {
     setSelectedGroupId(groupId);
@@ -111,6 +156,51 @@ export const UnifiedCategoryTable: React.FC = () => {
     setGroupName('');
     setEditingGroupId(null);
   }, [dispatch, modalMode, editingGroupId, groupName, user]);
+  
+  // Inline editing handlers
+  const handleStartEditing = (categoryId: string, field: 'name' | 'budget', value: string) => {
+    setEditingCell({ categoryId, field });
+    // For budget field, remove currency symbol and formatting
+    if (field === 'budget') {
+      const numericValue = value.replace(/[^0-9.-]+/g, '');
+      setEditValue(numericValue);
+    } else {
+      setEditValue(value);
+    }
+  };
+  
+  const handleSaveEdit = () => {
+    if (!editingCell) return;
+
+    const { categoryId, field } = editingCell;
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return;
+
+    let newValue: string | number = editValue;
+    if (field === 'budget') {
+      newValue = parseCurrency(editValue, currencyFormat);
+    }
+
+    dispatch(updateCategory({
+      id: categoryId,
+      [field]: newValue
+    }));
+    setEditingCell(null);
+    setEditValue('');
+  };
+  
+  const handleCancelEdit = () => {
+    setEditingCell(null);
+    setEditValue('');
+  };
+  
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
+  };
 
   if (loading || !user) {
     return (
@@ -142,23 +232,25 @@ export const UnifiedCategoryTable: React.FC = () => {
                 Available
               </th>
               <th scope="col" className="w-32 px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Actions
+                {/* Empty header for actions */}
               </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {categoryGroups.map((group) => {
               const groupCategories = categories.filter(c => c.groupId === group.id);
-              const totalAssigned = groupCategories.reduce((sum, cat) => sum + cat.budget, 0);
-              const totalActivity = groupCategories.reduce((sum, cat) => 
-                sum + calculateCategoryActivity(cat.id, transactions, currentMonth, convertAmount), 0);
-              const totalRemaining = totalAssigned - totalActivity;
+              const groupActivity = categoryActivities
+                .filter(activity => groupCategories.some(cat => cat.id === activity.id))
+                .reduce((sum, activity) => sum + activity.activity, 0);
+              const groupBudget = groupCategories.reduce((sum, cat) => sum + cat.budget, 0);
+              const groupRemaining = groupBudget - groupActivity;
+              const groupPercentUsed = groupBudget > 0 ? Math.min((groupActivity / groupBudget) * 100, 100) : 0;
 
               return (
                 <React.Fragment key={group.id}>
                   {/* Group Header Row */}
                   <tr 
-                    className={`bg-gray-50 hover:bg-gray-100 group ${
+                    className={`bg-gray-50 hover:bg-gray-100 ${
                       draggedCategoryId ? 'border-blue-300 border-dashed' : ''
                     }`}
                     onDragOver={(e) => {
@@ -198,31 +290,29 @@ export const UnifiedCategoryTable: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="text-sm font-medium text-gray-900">
-                        {currencyFormat.placement === 'before' ? currencySymbol : ''}
-                        {totalAssigned.toFixed(2)}
-                        {currencyFormat.placement === 'after' ? currencySymbol : ''}
+                        {formatCurrency(groupBudget, currencyFormat)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="text-sm font-medium text-gray-900">
                         {currencyFormat.placement === 'before' ? currencySymbol : ''}
-                        {totalActivity.toFixed(2)}
+                        {groupActivity.toFixed(2)}
                         {currencyFormat.placement === 'after' ? currencySymbol : ''}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className={`text-sm font-medium ${
-                        totalRemaining < 0 ? 'text-red-600' : 
-                        totalRemaining < 0.2 * totalAssigned ? 'text-yellow-600' : 
+                        groupRemaining < 0 ? 'text-red-600' : 
+                        groupRemaining < 0.2 * groupBudget ? 'text-yellow-600' : 
                         'text-green-600'
                       }`}>
                         {currencyFormat.placement === 'before' ? currencySymbol : ''}
-                        {totalRemaining.toFixed(2)}
+                        {groupRemaining.toFixed(2)}
                         {currencyFormat.placement === 'after' ? currencySymbol : ''}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end space-x-2">
                         <button 
                           className="p-1 text-purple-400 hover:text-purple-600"
                           onClick={() => handleAddCategory(group.id)}
@@ -249,19 +339,17 @@ export const UnifiedCategoryTable: React.FC = () => {
                   </tr>
                   {/* Category Rows */}
                   {!group.isCollapsed && groupCategories.map((category) => {
-                    const activity = calculateCategoryActivity(
-                      category.id,
-                      transactions,
-                      currentMonth,
-                      convertAmount
-                    );
+                    const activityData = categoryActivities.find(a => a.id === category.id);
+                    const activity = activityData ? activityData.activity : 0;
                     const remaining = category.budget - activity;
                     const percentUsed = category.budget > 0 ? Math.min((activity / category.budget) * 100, 100) : 0;
+                    const isEditingName = editingCell?.categoryId === category.id && editingCell?.field === 'name';
+                    const isEditingBudget = editingCell?.categoryId === category.id && editingCell?.field === 'budget';
                     
                     return (
                       <tr 
                         key={category.id}
-                        className="hover:bg-gray-50 group"
+                        className="hover:bg-gray-50"
                         draggable
                         onDragStart={(e) => handleDragStart(e, category.id)}
                         onDragEnd={handleDragEnd}
@@ -272,14 +360,51 @@ export const UnifiedCategoryTable: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap pl-10">
-                          <div className="text-sm text-gray-900">{category.name}</div>
+                          {isEditingName ? (
+                            <input
+                              ref={inputRef}
+                              type="text"
+                              value={editValue}
+                              onChange={(e) => setEditValue(e.target.value)}
+                              onBlur={handleSaveEdit}
+                              onKeyDown={handleKeyDown}
+                              className="w-full px-2 py-1 text-sm border border-purple-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent bg-white min-w-0"
+                              style={{ width: 'auto', minWidth: '100px' }}
+                            />
+                          ) : (
+                            <div 
+                              className="text-sm text-gray-900 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition-colors"
+                              onClick={() => handleStartEditing(category.id, 'name', category.name)}
+                            >
+                              {category.name}
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="text-sm text-gray-900">
-                            {currencyFormat.placement === 'before' ? currencySymbol : ''}
-                            {category.budget.toFixed(2)}
-                            {currencyFormat.placement === 'after' ? currencySymbol : ''}
-                          </div>
+                          {isEditingBudget ? (
+                            <div className="relative flex items-center justify-end">
+                              <input
+                                ref={inputRef}
+                                type="text"
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                onBlur={handleSaveEdit}
+                                onKeyDown={handleKeyDown}
+                                className="w-24 text-right bg-white border rounded px-2 py-1 pr-6"
+                                autoFocus
+                              />
+                              <span className="absolute right-2 text-sm text-gray-500">
+                                {currencyFormat.currency}
+                              </span>
+                            </div>
+                          ) : (
+                            <div
+                              className="text-sm text-gray-900 cursor-pointer hover:bg-gray-50"
+                              onClick={() => handleStartEditing(category.id, 'budget', category.budget.toString())}
+                            >
+                              {formatCurrency(category.budget, currencyFormat)}
+                            </div>
+                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <div className="text-sm text-gray-900">
@@ -310,7 +435,7 @@ export const UnifiedCategoryTable: React.FC = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="flex items-center justify-end space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-end">
                             <button 
                               className="p-1 text-red-400 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 rounded-lg"
                               onClick={() => dispatch(deleteCategory(category.id))}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { createBrowserRouter, RouterProvider, Outlet, Navigate, useLocation } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Outlet, Navigate, useLocation, useParams } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from '@/store';
 import Navigation from '@/components/Navigation';
@@ -15,6 +15,7 @@ import LandingPage from './components/LandingPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useDispatch } from 'react-redux';
 import { loadUserData } from './store/budgetSlice';
+import AccountTransactionPage from './components/Accounts/AccountTransactionPage';
 
 interface RouteWrapperProps {
   children: React.ReactNode;
@@ -79,25 +80,60 @@ const MainAppLayout = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Only show navigation when not on account or settings pages */}
-      {!hideNavigation && (
-        <Navigation 
-          isCollapsed={isNavCollapsed} 
-          onCollapsedChange={setIsNavCollapsed} 
-        />
-      )}
-      <main className={`min-h-screen ${isMobile ? 'pb-20' : ''}`}>
-        <div className={`mx-auto transition-all duration-300 ${
-          !hideNavigation && !isMobile ? (isNavCollapsed ? 'pl-16' : 'pl-64') : ''
-        }`}>
-          <div className="max-w-[1000px] mx-auto px-4 py-6 md:py-8">
+    <div className="min-h-screen h-full bg-background">
+      <div className="flex h-full">
+        {/* Navigation */}
+        {!hideNavigation && (
+          <div 
+            className={`
+              ${isMobile ? 'fixed inset-y-0 left-0 z-30' : 'sticky top-0 h-screen'}
+              transition-all duration-300 ease-in-out
+              ${isNavCollapsed ? 'w-16' : 'w-64'}
+            `}
+          >
+            <Navigation 
+              isCollapsed={isNavCollapsed} 
+              onCollapsedChange={setIsNavCollapsed} 
+            />
+          </div>
+        )}
+
+        {/* Main content area */}
+        <main 
+          className={`
+            flex-1 h-full transition-all duration-300 ease-in-out
+            ${!hideNavigation && !isMobile ? (isNavCollapsed ? 'pl-4' : 'pl-6') : 'px-4'}
+            ${isMobile ? 'w-full' : ''}
+            ${!hideNavigation && !isMobile ? (isNavCollapsed ? 'w-[calc(100%-4rem)]' : 'w-[calc(100%-16rem)]') : ''}
+          `}
+        >
+          {/* Mobile overlay */}
+          {isMobile && !isNavCollapsed && !hideNavigation && (
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-20"
+              onClick={() => setIsNavCollapsed(true)}
+            />
+          )}
+
+          {/* Content container */}
+          <div className={`
+            h-full
+            max-w-[1400px] 
+            py-6 md:py-8
+            ${!hideNavigation && !isMobile ? 'pr-6' : 'px-4'}
+          `}>
             <Outlet />
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
+};
+
+// AccountTransactionPageWrapper component
+const AccountTransactionPageWrapper = () => {
+  const { accountId } = useParams();
+  return accountId ? <AccountTransactionPage accountId={accountId} /> : null;
 };
 
 // Create router
@@ -142,6 +178,10 @@ const router = createBrowserRouter([
       {
         path: "account/connections",
         element: <AccountConnections />
+      },
+      {
+        path: "accounts/:accountId",
+        element: <AccountTransactionPageWrapper />
       }
     ]
   },

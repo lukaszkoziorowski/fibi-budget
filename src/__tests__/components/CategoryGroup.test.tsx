@@ -1,192 +1,134 @@
-import { render, fireEvent, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import CategoryGroup from '@/components/CategoryList/CategoryGroup';
-import { BudgetState, Category } from '@/types';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import budgetReducer, { getDefaultState } from '@/store/budgetSlice';
+import { CategoryGroupComponent } from '@/components/CategoryList/CategoryGroup';
+import type { CategoryGroup, Category, BudgetState } from '@/types';
+import budgetReducer from '@/store/budgetSlice';
 
-const mockCategories = [
-  { id: '1', name: 'Food', budget: 1000, groupId: 'needs' },
-  { id: '2', name: 'Rent', budget: 2000, groupId: 'bills' },
-  { id: '3', name: 'Entertainment', budget: 500, groupId: 'wants' }
-];
+// Mock the hooks
+jest.mock('@/hooks/useCurrency', () => ({
+  useCurrency: () => ({
+    currencyFormat: { currency: 'USD' },
+    currencySymbol: '$'
+  })
+}));
 
-const initialState: BudgetState = {
-  categories: mockCategories,
-  transactions: [],
-  currentMonth: '2024-03',
-  globalCurrency: 'USD',
-  currencyFormat: {
-    currency: 'USD',
-    placement: 'before',
-    numberFormat: {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+// Create a mock store
+const createMockStore = (initialState: Partial<BudgetState> = {}) => {
+  return configureStore({
+    reducer: {
+      budget: budgetReducer
     },
-    dateFormat: 'MM/DD/YYYY'
-  },
-  balance: 1000,
-  budgetName: '',
-  categoryGroups: [
-    { id: 'bills', name: 'Bills', isExpanded: true },
-    { id: 'needs', name: 'Needs', isExpanded: true },
-    { id: 'wants', name: 'Wants', isExpanded: true }
-  ]
+    preloadedState: {
+      budget: {
+        categories: [],
+        categoryGroups: [],
+        transactions: [],
+        currentMonth: '2024-03',
+        globalCurrency: 'USD',
+        currencyFormat: {
+          currency: 'USD',
+          locale: 'en-US',
+          placement: 'before' as const,
+          numberFormat: {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          },
+          dateFormat: 'MM/DD/YYYY'
+        },
+        balance: 0,
+        budgetName: 'Test Budget',
+        ...initialState
+      }
+    }
+  });
 };
 
 describe('CategoryGroup', () => {
-  const mockStore = configureStore({
-    reducer: {
-      budget: (state: BudgetState = initialState, action: any) => {
-        switch (action.type) {
-          case 'budget/updateCategoryGroup':
-            return {
-              ...state,
-              categoryGroups: state.categoryGroups.map(group =>
-                group.id === action.payload.id ? { ...group, ...action.payload } : group
-              )
-            };
-          case 'budget/addCategoryGroup':
-            return {
-              ...state,
-              categoryGroups: [...state.categoryGroups, action.payload]
-            };
-          case 'budget/deleteCategoryGroup':
-            return {
-              ...state,
-              categoryGroups: state.categoryGroups.filter(group => group.id !== action.payload)
-            };
-          case 'budget/updateCategory':
-            return {
-              ...state,
-              categories: state.categories.map(category =>
-                category.id === action.payload.id ? { ...category, ...action.payload } : category
-              )
-            };
-          default:
-            return state;
-        }
-      }
-    },
-    preloadedState: { budget: initialState }
-  });
+  const mockGroup: CategoryGroup = {
+    id: '1',
+    name: 'Test Group',
+    userId: 'user1',
+    createdAt: '2024-03-01',
+    updatedAt: '2024-03-01',
+    isCollapsed: false
+  };
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
+  const mockCategories: Category[] = [
+    {
+      id: '1',
+      name: 'Category 1',
+      budget: 100,
+      groupId: '1',
+      userId: 'user1',
+      createdAt: '2024-03-01',
+      updatedAt: '2024-03-01'
+    }
+  ];
 
-  it('renders category group with correct name', () => {
-    render(
-      <Provider store={mockStore}>
-        <CategoryGroup groupId="bills" />
-      </Provider>
-    );
-
-    expect(screen.getByText('Bills')).toBeInTheDocument();
-  });
-
-  it('displays categories belonging to the group', () => {
-    render(
-      <Provider store={mockStore}>
-        <CategoryGroup groupId="bills" />
-      </Provider>
-    );
-
-    expect(screen.getByText('Rent')).toBeInTheDocument();
-  });
-
-  it('toggles group expansion when clicking the expand/collapse button', () => {
-    render(
-      <Provider store={mockStore}>
-        <CategoryGroup groupId="bills" />
-      </Provider>
-    );
-
-    const toggleButton = screen.getByLabelText('Toggle group');
-    fireEvent.click(toggleButton);
-
-    const updatedState = mockStore.getState().budget;
-    const billsGroup = updatedState.categoryGroups.find(g => g.id === 'bills');
-    expect(billsGroup?.isExpanded).toBe(false);
-  });
-
-  it('allows editing group name', () => {
-    render(
-      <Provider store={mockStore}>
-        <CategoryGroup groupId="bills" />
-      </Provider>
-    );
-
-    const editButton = screen.getByLabelText('Edit group');
-    fireEvent.click(editButton);
-
-    const nameInput = screen.getByDisplayValue('Bills');
-    fireEvent.change(nameInput, { target: { value: 'Monthly Bills' } });
-    fireEvent.blur(nameInput);
-
-    const updatedState = mockStore.getState().budget;
-    const billsGroup = updatedState.categoryGroups.find(g => g.id === 'bills');
-    expect(billsGroup?.name).toBe('Monthly Bills');
-  });
-
-  it('allows deleting group', () => {
-    render(
-      <Provider store={mockStore}>
-        <CategoryGroup groupId="bills" />
-      </Provider>
-    );
-
-    const deleteButton = screen.getByLabelText('Delete group');
-    fireEvent.click(deleteButton);
-
-    // Should show confirmation dialog
-    const confirmButton = screen.getByText('Confirm Delete');
-    fireEvent.click(confirmButton);
-
-    const updatedState = mockStore.getState().budget;
-    expect(updatedState.categoryGroups.find(g => g.id === 'bills')).toBeUndefined();
-  });
-
-  it('handles drag and drop of categories between groups', () => {
-    const mockStore = configureStore({
-      reducer: {
-        budget: budgetReducer
-      },
-      preloadedState: {
-        budget: {
-          ...getDefaultState(),
-          categories: [
-            { id: '1', name: 'Food', budget: 1000, spent: 0, groupId: 'needs' }
-          ],
-          categoryGroups: [
-            { id: 'needs', name: 'Needs', isExpanded: true },
-            { id: 'bills', name: 'Bills', isExpanded: true }
-          ]
-        }
-      }
+  it('renders group name and toggle button', () => {
+    const store = createMockStore({
+      categoryGroups: [mockGroup],
+      categories: mockCategories
     });
 
     render(
-      <Provider store={mockStore}>
-        <div>
-          <CategoryGroup groupId="needs" />
-          <CategoryGroup groupId="bills" />
-        </div>
+      <Provider store={store}>
+        <CategoryGroupComponent groupId={mockGroup.id} />
       </Provider>
     );
 
-    const foodCategory = screen.getByText('Food').closest('tr');
-    const billsGroup = screen.getByText('Bills').closest('div[role="group"]');
-
-    if (foodCategory && billsGroup) {
-      fireEvent.dragStart(foodCategory);
-      fireEvent.drop(billsGroup);
-      fireEvent.dragEnd(foodCategory);
-
-      const updatedState = mockStore.getState().budget as BudgetState;
-      const movedCategory = updatedState.categories.find((c: Category) => c.id === '1');
-      expect(movedCategory?.groupId).toBe('bills');
-    }
+    expect(screen.getByText('Test Group')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Toggle group' })).toBeInTheDocument();
   });
-}); 
+
+  it('toggles collapse state when clicking the button', () => {
+    const store = createMockStore({
+      categoryGroups: [mockGroup],
+      categories: mockCategories
+    });
+
+    render(
+      <Provider store={store}>
+        <CategoryGroupComponent groupId={mockGroup.id} />
+      </Provider>
+    );
+
+    const toggleButton = screen.getByRole('button', { name: 'Toggle group' });
+    fireEvent.click(toggleButton);
+
+    const state = store.getState();
+    expect(state.budget.categoryGroups[0].isCollapsed).toBe(true);
+  });
+
+  it('shows categories when not collapsed', () => {
+    const store = createMockStore({
+      categoryGroups: [mockGroup],
+      categories: mockCategories
+    });
+
+    render(
+      <Provider store={store}>
+        <CategoryGroupComponent groupId={mockGroup.id} />
+      </Provider>
+    );
+
+    expect(screen.getByText('Category 1')).toBeInTheDocument();
+  });
+
+  it('hides categories when collapsed', () => {
+    const collapsedGroup = { ...mockGroup, isCollapsed: true };
+    const store = createMockStore({
+      categoryGroups: [collapsedGroup],
+      categories: mockCategories
+    });
+
+    render(
+      <Provider store={store}>
+        <CategoryGroupComponent groupId={collapsedGroup.id} />
+      </Provider>
+    );
+
+    expect(screen.queryByText('Category 1')).not.toBeInTheDocument();
+  });
+});

@@ -107,7 +107,6 @@ describe('UnifiedCategoryTable', () => {
     expect(screen.getByText('Assigned')).toBeInTheDocument();
     expect(screen.getByText('Activity')).toBeInTheDocument();
     expect(screen.getByText('Available')).toBeInTheDocument();
-    expect(screen.getByText('Actions')).toBeInTheDocument();
   });
 
   it('collapses and expands category groups when clicked', async () => {
@@ -157,14 +156,14 @@ describe('UnifiedCategoryTable', () => {
     expect(findAmountInCell('200.00')).toBe(true);
   });
 
-  it('shows action buttons on group hover', () => {
+  it('shows action buttons on group row', () => {
     renderComponent();
 
     // Get the first group row
     const groupRow = screen.getByText('Necessities').closest('tr');
     expect(groupRow).toBeInTheDocument();
 
-    // Action buttons should be in the group row
+    // Action buttons should be visible in the group row
     const addButton = within(groupRow!).getByRole('button', { name: 'Add category' });
     const editButton = within(groupRow!).getByRole('button', { name: 'Edit group' });
     const deleteButton = within(groupRow!).getByRole('button', { name: 'Delete group' });
@@ -172,6 +171,19 @@ describe('UnifiedCategoryTable', () => {
     expect(addButton).toBeInTheDocument();
     expect(editButton).toBeInTheDocument();
     expect(deleteButton).toBeInTheDocument();
+  });
+
+  it('shows delete button on category row', () => {
+    renderComponent();
+    
+    // Find the Groceries category row
+    const groceriesRow = screen.getByText('Groceries').closest('tr');
+    expect(groceriesRow).toBeInTheDocument();
+    
+    // The delete button should be visible
+    const deleteButton = groceriesRow?.querySelector('button[aria-label="Delete category"]');
+    expect(deleteButton).toBeInTheDocument();
+    expect(deleteButton?.parentElement).not.toHaveClass('opacity-0');
   });
 
   it('opens edit modal when edit button is clicked', () => {

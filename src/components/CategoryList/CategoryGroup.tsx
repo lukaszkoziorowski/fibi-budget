@@ -3,12 +3,47 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
 import { CategoryRow } from './CategoryRow';
 import { useCurrency } from '@/hooks/useCurrency';
+import { CategoryGroup as CategoryGroupType } from '@/types';
+import { ChevronDownIcon } from '@heroicons/react/24/outline';
 
 interface CategoryGroupProps {
+  group: CategoryGroupType;
+  onToggleCollapse: (groupId: string) => void;
+  children: React.ReactNode;
+}
+
+export const CategoryGroup = ({ group, onToggleCollapse, children }: CategoryGroupProps) => {
+  const [, setIsHovered] = useState(false);
+
+  return (
+    <div
+      className="group"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div
+        className="flex items-center justify-between p-2 bg-gray-50 cursor-pointer hover:bg-gray-100"
+        onClick={() => onToggleCollapse(group.id)}
+      >
+        <div className="flex items-center space-x-2">
+          <ChevronDownIcon
+            className={`w-5 h-5 text-gray-500 transition-transform ${
+              group.isCollapsed ? '-rotate-90' : ''
+            }`}
+          />
+          <span className="font-medium">{group.name}</span>
+        </div>
+      </div>
+      {!group.isCollapsed && children}
+    </div>
+  );
+};
+
+interface CategoryGroupComponentProps {
   groupId: string;
 }
 
-const CategoryGroup: React.FC<CategoryGroupProps> = ({ groupId }) => {
+export const CategoryGroupComponent = ({ groupId }: CategoryGroupComponentProps) => {
   const dispatch = useDispatch();
   const { currencyFormat, currencySymbol } = useCurrency();
   const [isEditing, setIsEditing] = useState(false);
@@ -223,6 +258,4 @@ const CategoryGroup: React.FC<CategoryGroupProps> = ({ groupId }) => {
       )}
     </div>
   );
-};
-
-export default CategoryGroup; 
+}; 

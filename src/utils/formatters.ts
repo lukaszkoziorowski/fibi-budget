@@ -3,6 +3,7 @@ import { CurrencyFormat } from '@/types';
 
 const DEFAULT_CURRENCY_FORMAT: CurrencyFormat = {
   currency: 'USD',
+  locale: 'en-US',
   placement: 'before',
   numberFormat: {
     minimumFractionDigits: 2,
@@ -12,10 +13,10 @@ const DEFAULT_CURRENCY_FORMAT: CurrencyFormat = {
 };
 
 export const formatCurrency = (amount: number, format: CurrencyFormat = DEFAULT_CURRENCY_FORMAT): string => {
-  const currencySymbol = currencies.find(c => c.code === format.currency)?.symbol || '$';
+  const currencySymbol = currencies.find(c => c.code === format.currency)?.symbol || format.currency;
   
   // Format the number according to the selected format
-  const formattedNumber = amount.toLocaleString('en-US', {
+  const formattedNumber = amount.toLocaleString(format.locale, {
     minimumFractionDigits: format.numberFormat.minimumFractionDigits,
     maximumFractionDigits: format.numberFormat.maximumFractionDigits,
     useGrouping: true
@@ -23,7 +24,7 @@ export const formatCurrency = (amount: number, format: CurrencyFormat = DEFAULT_
 
   // Handle negative numbers
   const isNegative = amount < 0;
-  const absoluteNumber = Math.abs(amount).toLocaleString('en-US', {
+  const absoluteNumber = Math.abs(amount).toLocaleString(format.locale, {
     minimumFractionDigits: format.numberFormat.minimumFractionDigits,
     maximumFractionDigits: format.numberFormat.maximumFractionDigits,
     useGrouping: true
@@ -40,6 +41,12 @@ export const formatCurrency = (amount: number, format: CurrencyFormat = DEFAULT_
   }
 
   return result;
+};
+
+export const parseCurrency = (value: string, format: CurrencyFormat = DEFAULT_CURRENCY_FORMAT): number => {
+  // Remove currency symbol and any other non-numeric characters except decimal point and minus sign
+  const numericValue = value.replace(/[^0-9.-]+/g, '');
+  return parseFloat(numericValue) || 0;
 };
 
 export const formatDate = (date: Date, format: string): string => {

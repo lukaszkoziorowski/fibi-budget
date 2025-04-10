@@ -4,6 +4,14 @@ export interface Currency {
   symbol: string;
 }
 
+export interface CurrencyFormat {
+  placement: 'before' | 'after';
+  symbol: string;
+  decimalPlaces: number;
+  thousandsSeparator: string;
+  decimalSeparator: string;
+}
+
 export const currencies: Currency[] = [
   { code: 'USD', name: 'US Dollar', symbol: '$' },
   { code: 'EUR', name: 'Euro', symbol: '€' },
@@ -17,15 +25,22 @@ export const currencies: Currency[] = [
   { code: 'INR', name: 'Indian Rupee', symbol: '₹' },
 ];
 
-export const getExchangeRate = async (from: string, to: string): Promise<number> => {
+const EXCHANGE_RATE_API = 'https://api.exchangerate-api.com/v4/latest';
+
+export const getExchangeRate = async (fromCurrency: string, toCurrency: string): Promise<number> => {
   try {
-    const response = await fetch(
-      `https://api.exchangerate-api.com/v4/latest/${from}`
-    );
+    const response = await fetch(`${EXCHANGE_RATE_API}/${fromCurrency}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch exchange rate');
+    }
+    
     const data = await response.json();
-    return data.rates[to];
+    return data.rates[toCurrency];
   } catch (error) {
     console.error('Error fetching exchange rate:', error);
-    return 1; // Fallback to 1:1 rate if API fails
+    throw error;
   }
-}; 
+};
+
+// Re-export formatCurrency from formatters.ts
+export { formatCurrency } from './formatters'; 

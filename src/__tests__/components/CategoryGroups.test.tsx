@@ -1,47 +1,82 @@
+import React from 'react';
 import { render, screen, fireEvent, createEvent, within, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import budgetReducer, {  } from '@/store/budgetSlice';
+import budgetReducer from '@/store/budgetSlice';
 import CategoryGroups from '@/components/CategoryGroups';
+import { Category, CategoryGroup, BudgetState, CurrencyFormat } from '@/types';
 
 describe('CategoryGroups', () => {
-  const initialState = {
-    budget: {
-      budgetName: 'Test Budget',
-      categories: [
-        { id: '1', name: 'Groceries', budget: 500, groupId: 'needs' },
-        { id: '2', name: 'Entertainment', budget: 200, groupId: 'wants' },
-        { id: '3', name: 'Rent', budget: 1000, groupId: 'bills' }
-      ],
-      categoryGroups: [
-        { id: 'bills', name: 'Bills', isCollapsed: false },
-        { id: 'needs', name: 'Needs', isCollapsed: false },
-        { id: 'wants', name: 'Wants', isCollapsed: false }
-      ],
-      transactions: [],
-      currentMonth: new Date().toISOString(),
-      globalCurrency: 'USD',
-      currencyFormat: {
-        currency: 'USD',
-        locale: 'en-US',
-        placement: 'before' as const,
-        dateFormat: 'MM/DD/YYYY',
-        numberFormat: {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-          useGrouping: true
-        }
-      },
-      balance: 0
+  const mockCategories: Category[] = [
+    {
+      id: '1',
+      name: 'Groceries',
+      budget: 500,
+      groupId: '1',
+      userId: 'user1',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    },
+    {
+      id: '2',
+      name: 'Rent',
+      budget: 1000,
+      groupId: '1',
+      userId: 'user1',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     }
+  ];
+
+  const mockGroups: CategoryGroup[] = [
+    {
+      id: '1',
+      name: 'Needs',
+      userId: 'user1',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isCollapsed: false
+    },
+    {
+      id: '2',
+      name: 'Wants',
+      userId: 'user1',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isCollapsed: false
+    }
+  ];
+
+  const mockCurrencyFormat: CurrencyFormat = {
+    currency: 'USD',
+    locale: 'en-US',
+    placement: 'before',
+    numberFormat: {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    },
+    dateFormat: 'MM/DD/YYYY'
+  };
+
+  const initialState: BudgetState = {
+    categories: mockCategories,
+    categoryGroups: mockGroups,
+    transactions: [],
+    currentMonth: new Date().toISOString(),
+    globalCurrency: 'USD',
+    currencyFormat: mockCurrencyFormat,
+    balance: 0,
+    budgetName: 'My Budget'
   };
 
   const renderWithProvider = (component: React.ReactNode) => {
     const store = configureStore({
       reducer: {
-        budget: budgetReducer as any // Type assertion to fix type error
+        budget: budgetReducer
       },
-      preloadedState: initialState
+      preloadedState: {
+        budget: initialState
+      }
     });
 
     return render(
@@ -55,30 +90,28 @@ describe('CategoryGroups', () => {
     renderWithProvider(<CategoryGroups />);
     
     // Check if groups are rendered
-    expect(screen.getByText('Bills')).toBeInTheDocument();
     expect(screen.getByText('Needs')).toBeInTheDocument();
     expect(screen.getByText('Wants')).toBeInTheDocument();
 
     // Check if categories are rendered in correct groups
     expect(screen.getByText('Rent')).toBeInTheDocument();
     expect(screen.getByText('Groceries')).toBeInTheDocument();
-    expect(screen.getByText('Entertainment')).toBeInTheDocument();
   });
 
   it('allows collapsing and expanding groups', async () => {
     renderWithProvider(<CategoryGroups />);
     
-    const billsGroup = screen.getByText('Bills').closest('div[class*="bg-white"]') as HTMLElement;
-    const tableContainer = within(billsGroup).getByRole('table').closest('div') as HTMLElement;
+    const needsGroup = screen.getByText('Needs').closest('div[class*="bg-white"]') as HTMLElement;
+    const tableContainer = within(needsGroup).getByRole('table').closest('div') as HTMLElement;
     expect(tableContainer).toBeInTheDocument();
     
     // Click to collapse
-    const collapseButton = within(billsGroup).getByRole('button', { name: '' });
+    const collapseButton = within(needsGroup).getByRole('button', { name: '' });
     fireEvent.click(collapseButton);
     
     // Table container should be removed
     await waitFor(() => {
-      expect(within(billsGroup).queryByRole('table')).not.toBeInTheDocument();
+      expect(within(needsGroup).queryByRole('table')).not.toBeInTheDocument();
     });
     
     // Click to expand
@@ -86,7 +119,7 @@ describe('CategoryGroups', () => {
     
     // Table container should be back
     await waitFor(() => {
-      expect(within(billsGroup).getByRole('table')).toBeInTheDocument();
+      expect(within(needsGroup).getByRole('table')).toBeInTheDocument();
     });
   });
 
@@ -112,81 +145,81 @@ describe('CategoryGroups', () => {
   it('allows editing a category group name', async () => {
     renderWithProvider(<CategoryGroups />);
     
-    const billsGroup = screen.getByText('Bills').closest('div[class*="bg-white"]') as HTMLElement;
-    const editButton = within(billsGroup).getByRole('button', { name: 'Edit group' });
+    const needsGroup = screen.getByText('Needs').closest('div[class*="bg-white"]') as HTMLElement;
+    const editButton = within(needsGroup).getByRole('button', { name: 'Edit group' });
     fireEvent.click(editButton);
     
     const nameInput = screen.getByRole('textbox');
-    fireEvent.change(nameInput, { target: { value: 'Updated Bills' } });
+    fireEvent.change(nameInput, { target: { value: 'Updated Needs' } });
     
     const saveButton = screen.getByRole('button', { name: 'Save' });
     fireEvent.click(saveButton);
     
     await waitFor(() => {
-      expect(screen.getByText('Updated Bills')).toBeInTheDocument();
+      expect(screen.getByText('Updated Needs')).toBeInTheDocument();
     });
   });
 
   it('allows deleting a category group', async () => {
     renderWithProvider(<CategoryGroups />);
     
-    const billsGroup = screen.getByText('Bills').closest('div[class*="bg-white"]') as HTMLElement;
-    const deleteButton = within(billsGroup).getByRole('button', { name: 'Delete group' });
+    const needsGroup = screen.getByText('Needs').closest('div[class*="bg-white"]') as HTMLElement;
+    const deleteButton = within(needsGroup).getByRole('button', { name: 'Delete group' });
     fireEvent.click(deleteButton);
     
     const confirmButton = screen.getByRole('button', { name: 'Delete' });
     fireEvent.click(confirmButton);
     
     await waitFor(() => {
-      expect(screen.queryByText('Bills')).not.toBeInTheDocument();
+      expect(screen.queryByText('Needs')).not.toBeInTheDocument();
     });
   });
 
   it('allows dragging categories between groups', async () => {
     renderWithProvider(<CategoryGroups />);
     
-    const groceriesRow = screen.getByText('Groceries').closest('tr');
-    const wantsGroup = screen.getByText('Wants').closest('div');
+    const groceriesRow = screen.getByText('Groceries').closest('tr') as HTMLElement;
+    const wantsGroup = screen.getByText('Wants').closest('div[class*="bg-white"]') as HTMLElement;
 
-    const dragStartEvent = createEvent.dragStart(groceriesRow!, {
+    const dragStartEvent = createEvent.dragStart(groceriesRow, {
       bubbles: true,
       cancelable: true,
     });
     Object.defineProperty(dragStartEvent, 'dataTransfer', {
       value: {
         setData: () => {},
-        getData: () => 'groceries',
+        getData: () => '1', // Category ID
       },
     });
 
-    const dragOverEvent = createEvent.dragOver(wantsGroup!, {
+    const dragOverEvent = createEvent.dragOver(wantsGroup, {
       bubbles: true,
       cancelable: true,
     });
     Object.defineProperty(dragOverEvent, 'dataTransfer', {
       value: {
         setData: () => {},
-        getData: () => 'groceries',
+        getData: () => '1', // Category ID
       },
     });
 
-    const dropEvent = createEvent.drop(wantsGroup!, {
+    const dropEvent = createEvent.drop(wantsGroup, {
       bubbles: true,
       cancelable: true,
     });
     Object.defineProperty(dropEvent, 'dataTransfer', {
       value: {
         setData: () => {},
-        getData: () => 'groceries',
+        getData: () => '1', // Category ID
       },
     });
 
-    fireEvent(groceriesRow!, dragStartEvent);
-    fireEvent(wantsGroup!, dragOverEvent);
-    fireEvent(wantsGroup!, dropEvent);
+    fireEvent(groceriesRow, dragStartEvent);
+    fireEvent(wantsGroup, dragOverEvent);
+    fireEvent(wantsGroup, dropEvent);
 
     await waitFor(() => {
-      const wantsCategories = screen.getAllByText('Groceries');
+      const wantsCategories = within(wantsGroup).getAllByText('Groceries');
       expect(wantsCategories).toHaveLength(1);
     });
   });

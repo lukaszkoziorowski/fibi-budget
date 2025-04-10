@@ -1,34 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
+import { Transaction } from '@/types';
 import { getExchangeRate } from '@/utils/currencies';
-import { Transaction } from '@/store/budgetSlice';
 
-export const useExchangeRates = (transactions: Transaction[], globalCurrency: string) => {
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    const fetchRates = async () => {
-      const uniqueCurrencies = new Set(transactions.map(t => t.originalCurrency || t.currency));
-      const rates: Record<string, number> = {};
-      
-      for (const currency of uniqueCurrencies) {
-        if (currency !== globalCurrency) {
-          rates[currency] = await getExchangeRate(currency, globalCurrency);
-        }
+export const useExchangeRates = (transactions: Transaction[], targetCurrency: string) => {
+  const convertAmount = useMemo(() => {
+    return async (amount: number, fromCurrency: string = targetCurrency): Promise<number> => {
+      if (fromCurrency === targetCurrency) {
+        return amount;
       }
-      
-      setExchangeRates(rates);
+
+      try {
+        const rate = await getExchangeRate(fromCurrency, targetCurrency);
+        return amount * rate;
+      } catch (error) {
+        console.error('Error converting currency:', error);
+        return amount; // Fallback to original amount if conversion fails
+      }
     };
-
-    fetchRates();
-  }, [transactions, globalCurrency]);
-
-  const convertAmount = (amount: number, fromCurrency: string) => {
-    if (fromCurrency === globalCurrency) return amount;
-    return amount * (exchangeRates[fromCurrency] || 1);
-  };
+  }, [targetCurrency]);
 
   return {
-    exchangeRates,
-    convertAmount,
+    convertAmount
   };
 }; 
