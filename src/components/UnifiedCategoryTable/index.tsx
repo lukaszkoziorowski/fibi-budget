@@ -308,26 +308,28 @@ export const UnifiedCategoryTable: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-medium text-gray-900">
-                        {formatCurrency(groupBudget, currencyFormat)}
+                      <div className="flex justify-end">
+                        <div className="text-sm font-medium text-gray-900 w-32 text-right" style={{ paddingRight: '0.125rem' }}>
+                          {formatCurrency(groupBudget, currencyFormat)}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className="text-sm font-medium text-gray-900">
-                        {currencyFormat.placement === 'before' ? currencySymbol : ''}
-                        {groupActivity.toFixed(2)}
-                        {currencyFormat.placement === 'after' ? currencySymbol : ''}
+                      <div className="flex justify-end">
+                        <div className="text-sm font-medium text-gray-900 w-32 text-right" style={{ paddingRight: '0.125rem' }}>
+                          {formatCurrency(groupActivity, currencyFormat)}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <div className={`text-sm font-medium ${
-                        groupRemaining < 0 ? 'text-red-600' : 
-                        groupRemaining < 0.2 * groupBudget ? 'text-yellow-600' : 
-                        'text-green-600'
-                      }`}>
-                        {currencyFormat.placement === 'before' ? currencySymbol : ''}
-                        {groupRemaining.toFixed(2)}
-                        {currencyFormat.placement === 'after' ? currencySymbol : ''}
+                      <div className="flex justify-end">
+                        <div className={`text-sm font-medium w-32 text-right ${
+                          groupRemaining < 0 ? 'text-red-600' : 
+                          groupRemaining < 0.2 * groupBudget ? 'text-yellow-600' : 
+                          'text-green-600'
+                        }`} style={{ paddingRight: '0.125rem' }}>
+                          {formatCurrency(groupRemaining, currencyFormat)}
+                        </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
@@ -401,38 +403,44 @@ export const UnifiedCategoryTable: React.FC = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           {isEditingBudget ? (
-                            <div className="relative flex items-center justify-end">
-                              <input
-                                ref={inputRef}
-                                type="text"
-                                value={editValue}
-                                onChange={(e) => setEditValue(e.target.value)}
-                                onBlur={handleSaveEdit}
-                                onKeyDown={handleKeyDown}
-                                className="w-24 text-right bg-white border rounded px-2 py-1 pr-6"
-                                autoFocus
-                              />
-                              <span className="absolute right-2 text-sm text-gray-500">
-                                {currencyFormat.currency}
-                              </span>
+                            <div className="flex justify-end">
+                              <div className="relative w-32">
+                                <input
+                                  ref={inputRef}
+                                  type="text"
+                                  value={editValue}
+                                  onChange={(e) => setEditValue(e.target.value)}
+                                  onBlur={handleSaveEdit}
+                                  onKeyDown={handleKeyDown}
+                                  className="w-full px-2 py-1 text-sm border border-purple-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-transparent bg-white text-right"
+                                  autoFocus
+                                />
+                              </div>
                             </div>
                           ) : (
-                            <div
-                              className="text-sm text-gray-900 cursor-pointer hover:bg-gray-50"
-                              onClick={() => handleStartEditing(category.id, 'budget', category.budget.toString())}
-                            >
-                              {formatCurrency(category.budget, currencyFormat)}
+                            <div className="flex justify-end">
+                              <div
+                                className="text-sm text-gray-900 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition-colors w-32 text-right"
+                                onClick={() => handleStartEditing(category.id, 'budget', category.budget.toString())}
+                                style={{ paddingRight: '0.125rem' }}
+                              >
+                                {formatCurrency(category.budget, currencyFormat)}
+                              </div>
                             </div>
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="text-sm font-medium text-gray-900">
-                            {formatCurrency(activity, currencyFormat)}
+                          <div className="flex justify-end">
+                            <div className="text-sm text-gray-900 w-32 text-right" style={{ paddingRight: '0.125rem' }}>
+                              {formatCurrency(activity, currencyFormat)}
+                            </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="text-sm font-medium text-gray-900">
-                            {formatCurrency(remaining, currencyFormat)}
+                          <div className="flex justify-end">
+                            <div className="text-sm text-gray-900 w-32 text-right" style={{ paddingRight: '0.125rem' }}>
+                              {formatCurrency(remaining, currencyFormat)}
+                            </div>
                           </div>
                           <div className="mt-1 w-full bg-gray-200 rounded-full h-1">
                             <div
