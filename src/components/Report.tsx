@@ -1,155 +1,96 @@
+import React from 'react';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
-import { enUS } from 'date-fns/locale';
-import { useState, useEffect } from 'react';
-import { currencies } from '@/utils/currencies';
-import { getExchangeRate } from '@/utils/currencies';
+import { useCurrency } from '@/hooks/useCurrency';
+import { useExchangeRates } from '@/hooks/useExchangeRates';
+import { calculateCategoryActivity } from '@/utils/categoryUtils';
+import { format } from 'date-fns';
 import { formatCurrency } from '@/utils/formatters';
-import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer
-} from 'recharts';
 
 const Report = () => {
-  const { transactions, globalCurrency, currencyFormat } = useSelector((state: RootState) => state.budget);
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
+  const { transactions, categories } = useSelector((state: RootState) => state.budget);
+  const { currencyFormat } = useCurrency();
+  const { convertAmount } = useExchangeRates(transactions, currencyFormat.currency);
 
-  // Get transactions from last 6 months
-  const getMonthlyData = () => {
-    const months = [];
-    const now = new Date();
-    
-    for (let i = 5; i >= 0; i--) {
-      const monthStart = startOfMonth(subMonths(now, i));
-      const monthEnd = endOfMonth(monthStart);
-      
-      const monthTransactions = transactions.filter(t => {
-        const transactionDate = new Date(t.date);
-        return transactionDate >= monthStart && transactionDate <= monthEnd;
-      });
+  // Calculate monthly expenses data
+  const monthlyData = React.useMemo(() => {
+    const last6Months = Array.from({ length: 6 }, (_, i) => {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      return format(date, 'yyyy-MM');
+    }).reverse();
 
-      const income = monthTransactions
-        .filter(t => t.type === 'income')
-        .reduce((sum, t) => sum + t.amount, 0);
+    return last6Months.map(month => {
+      const monthlyExpenses = categories.reduce((total, category) => {
+        const activity = calculateCategoryActivity(
+          category.id,
+          transactions,
+          month,
+          convertAmount
+        );
+        return total + activity;
+      }, 0);
 
-      const expenses = monthTransactions
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + Math.abs(t.amount), 0);
-
-      months.push({
-        month: format(monthStart, 'MMMM yyyy', { locale: enUS }),
-        income,
-        expenses,
-      });
-    }
-
-    return months;
-  };
-
-  const monthlyData = getMonthlyData();
-  const maxAmount = Math.max(
-    ...monthlyData.map(m => Math.max(m.income, m.expenses))
-  );
+      return {
+        month: format(new Date(month), 'MMM yyyy'),
+        expenses: monthlyExpenses
+      };
+    });
+  }, [transactions, categories, convertAmount]);
 
   return (
-    <div className="space-y-8">
-      {/* Financial Report Section */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Financial Report</h2>
-          <div className="space-y-6">
-            {monthlyData.map((data) => {
-              const incomePercentage = (data.income / maxAmount) * 100;
-              const expensesPercentage = (data.expenses / maxAmount) * 100;
-
-              return (
-                <div key={data.month} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-gray-900">{data.month}</span>
-                    <div className="flex gap-4">
-                      <span className="text-sm text-green-600">
-                        +{formatCurrency(data.income, currencyFormat)}
-                      </span>
-                      <span className="text-sm text-red-600">
-                        -{formatCurrency(data.expenses, currencyFormat)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="flex h-full">
-                      <div
-                        className="bg-green-500"
-                        style={{ width: `${incomePercentage}%` }}
-                      />
-                      <div
-                        className="bg-red-500"
-                        style={{ width: `${expensesPercentage}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Expenses Trend Chart */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Expenses Trend</h2>
-          <div className="h-[300px]">
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4">
+        <h1 className="text-2xl font-bold text-gray-900 mb-8">Expense Report</h1>
+        
+        {/* Expenses Trend Chart */}
+        <div className="bg-white p-6 rounded-xl shadow-lg mb-8">
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Expenses Trend</h2>
+          <div className="h-[400px]" data-testid="chart-container">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={monthlyData}
                 margin={{
-                  top: 10,
+                  top: 20,
                   right: 30,
-                  left: 0,
-                  bottom: 0,
+                  left: 60,
+                  bottom: 20
                 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="month" 
-                  tick={{ fill: '#6B7280' }}
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fill: '#6B7280', fontSize: 12 }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#E5E7EB' }}
                 />
-                <YAxis 
-                  tick={{ fill: '#6B7280' }}
-                  tickFormatter={(value) => formatCurrency(value, currencyFormat)}
+                <YAxis
+                  tick={{ fill: '#6B7280', fontSize: 12 }}
+                  tickFormatter={(value: number) => formatCurrency(value, currencyFormat)}
+                  width={80}
+                  tickLine={false}
+                  axisLine={{ stroke: '#E5E7EB' }}
                 />
-                <Tooltip 
-                  formatter={(value: string | number | Array<string | number>) => {
-                    if (typeof value === 'number') {
-                      return [formatCurrency(value, currencyFormat), 'Expenses'];
-                    }
-                    return [value, 'Expenses'];
-                  }}
-                  contentStyle={{
-                    backgroundColor: '#fff',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '0.375rem',
-                  }}
+                <Tooltip
+                  formatter={(value: number) => [
+                    formatCurrency(value, currencyFormat),
+                    'Expenses'
+                  ]}
                 />
-                <defs>
-                  <linearGradient id="expensesGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#9333EA" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#9333EA" stopOpacity={0.1}/>
-                  </linearGradient>
-                </defs>
                 <Area
                   type="monotone"
                   dataKey="expenses"
-                  stroke="#9333EA"
-                  fill="url(#expensesGradient)"
+                  stroke="#8B5CF6"
+                  fill="url(#colorExpenses)"
                   strokeWidth={2}
                 />
+                <defs>
+                  <linearGradient id="colorExpenses" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
               </AreaChart>
             </ResponsiveContainer>
           </div>
