@@ -30,6 +30,7 @@ describe('Account Slice', () => {
     description: 'Test Transaction',
     date: '2024-01-01',
     userId: 'user1',
+    isReconciled: false,
     createdAt: '2024-01-01T00:00:00.000Z',
     updatedAt: '2024-01-01T00:00:00.000Z',
   };
@@ -40,6 +41,7 @@ describe('Account Slice', () => {
       transactions: [],
       isLoading: false,
       error: null,
+      activeAccountId: null,
     });
   });
 
@@ -59,6 +61,7 @@ describe('Account Slice', () => {
       transactions: [],
       isLoading: false,
       error: null,
+      activeAccountId: null,
     };
 
     const updatedAccount = { ...mockAccount, name: 'Updated Account' };
@@ -72,6 +75,7 @@ describe('Account Slice', () => {
       transactions: [],
       isLoading: false,
       error: null,
+      activeAccountId: null,
     };
 
     const actual = accountReducer(initialState, deleteAccount('1'));
@@ -89,6 +93,7 @@ describe('Account Slice', () => {
       transactions: [],
       isLoading: false,
       error: null,
+      activeAccountId: null,
     };
 
     const actual = accountReducer(initialState, addTransaction(mockTransaction));
@@ -102,6 +107,7 @@ describe('Account Slice', () => {
       transactions: [mockTransaction],
       isLoading: false,
       error: null,
+      activeAccountId: null,
     };
 
     const updatedTransaction = { ...mockTransaction, amount: 200 };
@@ -116,6 +122,7 @@ describe('Account Slice', () => {
       transactions: [mockTransaction],
       isLoading: false,
       error: null,
+      activeAccountId: null,
     };
 
     const actual = accountReducer(initialState, deleteTransaction('1'));

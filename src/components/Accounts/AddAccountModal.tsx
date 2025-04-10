@@ -8,9 +8,8 @@ interface AddAccountModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
 const AddAccountModal: React.FC<AddAccountModalProps> = ({ isOpen, onClose }) => {
-  const { user } = useAuth();
+  const { currentUser: user } = useAuth();
   const dispatch = useDispatch();
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('checking');

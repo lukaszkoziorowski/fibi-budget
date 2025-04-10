@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { Account, Transaction } from '../../types/account';
 import { formatCurrency } from '../../utils/formatters';
 import { PlusIcon, ArrowUturnLeftIcon, ArrowUturnRightIcon } from '@heroicons/react/24/outline';
 import { createSelector } from '@reduxjs/toolkit';
@@ -32,7 +31,7 @@ const AccountTransactionPage: React.FC<AccountTransactionPageProps> = ({ account
   const transactions = useSelector((state: RootState) => selectAccountTransactions(state, accountId));
   const { currencyFormat } = useSelector((state: RootState) => state.budget);
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const [] = useState('');
   const [isAddTransactionModalOpen, setIsAddTransactionModalOpen] = useState(false);
 
   if (!account) {

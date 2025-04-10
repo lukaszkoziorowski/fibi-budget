@@ -6,6 +6,7 @@ const initialState: AccountState = {
   transactions: [],
   isLoading: false,
   error: null,
+  activeAccountId: null
 };
 
 const accountSlice = createSlice({

@@ -9,7 +9,6 @@ import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { calculateCategoryActivity } from '@/utils/categoryUtils';
 import { Dialog } from '@headlessui/react';
 import { formatCurrency, parseCurrency } from '@/utils/formatters';
-import { CurrencyFormat } from '@/types';
 
 interface EditingCell {
   categoryId: string;
@@ -25,7 +24,7 @@ export const UnifiedCategoryTable: React.FC = () => {
   const dispatch = useDispatch();
   const { categories, categoryGroups, transactions, currentMonth } = useSelector((state: RootState) => state.budget);
   const { currencyFormat, currencySymbol } = useCurrency();
-  const { convertAmount } = useExchangeRates(transactions, currencyFormat.currency);
+  const { convertAmount } = useExchangeRates(currencyFormat.currency);
   const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(null);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
@@ -54,22 +53,43 @@ export const UnifiedCategoryTable: React.FC = () => {
   // Load category activities
   const [categoryActivities, setCategoryActivities] = useState<CategoryActivity[]>([]);
   useEffect(() => {
+    let isMounted = true;
+
     const loadActivities = async () => {
-      const activities = await Promise.all(
-        categories.map(async (category) => ({
-          id: category.id,
-          activity: await calculateCategoryActivity(
-            category.id,
-            transactions,
-            currentMonth,
-            convertAmount
-          )
-        }))
-      );
-      setCategoryActivities(activities);
+      try {
+        const activities = await Promise.all(
+          categories.map(async (category) => {
+            const activity = await calculateCategoryActivity(
+              category.id,
+              transactions,
+              currentMonth,
+              convertAmount
+            );
+            return {
+              id: category.id,
+              activity: activity || 0
+            };
+          })
+        );
+        if (isMounted) {
+          setCategoryActivities(activities);
+        }
+      } catch (error) {
+        console.error('Error loading category activities:', error);
+        if (isMounted) {
+          setCategoryActivities(categories.map(category => ({
+            id: category.id,
+            activity: 0
+          })));
+        }
+      }
     };
 
     loadActivities();
+
+    return () => {
+      isMounted = false;
+    };
   }, [categories, transactions, currentMonth, convertAmount]);
 
   const handleAddCategory = useCallback((groupId: string) => {
@@ -244,7 +264,6 @@ export const UnifiedCategoryTable: React.FC = () => {
                 .reduce((sum, activity) => sum + activity.activity, 0);
               const groupBudget = groupCategories.reduce((sum, cat) => sum + cat.budget, 0);
               const groupRemaining = groupBudget - groupActivity;
-              const groupPercentUsed = groupBudget > 0 ? Math.min((groupActivity / groupBudget) * 100, 100) : 0;
 
               return (
                 <React.Fragment key={group.id}>
@@ -340,9 +359,9 @@ export const UnifiedCategoryTable: React.FC = () => {
                   {/* Category Rows */}
                   {!group.isCollapsed && groupCategories.map((category) => {
                     const activityData = categoryActivities.find(a => a.id === category.id);
-                    const activity = activityData ? activityData.activity : 0;
-                    const remaining = category.budget - activity;
-                    const percentUsed = category.budget > 0 ? Math.min((activity / category.budget) * 100, 100) : 0;
+                    const activity = activityData?.activity ?? 0;
+                    const remaining = (category.budget || 0) - activity;
+                    const percentUsed = (category.budget || 0) > 0 ? Math.min((activity / (category.budget || 1)) * 100, 100) : 0;
                     const isEditingName = editingCell?.categoryId === category.id && editingCell?.field === 'name';
                     const isEditingBudget = editingCell?.categoryId === category.id && editingCell?.field === 'budget';
                     
@@ -407,27 +426,19 @@ export const UnifiedCategoryTable: React.FC = () => {
                           )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="text-sm text-gray-900">
-                            {currencyFormat.placement === 'before' ? currencySymbol : ''}
-                            {activity.toFixed(2)}
-                            {currencyFormat.placement === 'after' ? currencySymbol : ''}
+                          <div className="text-sm font-medium text-gray-900">
+                            {formatCurrency(activity, currencyFormat)}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className={`text-sm font-medium ${
-                            remaining < 0 ? 'text-red-600' : 
-                            remaining < 0.2 * category.budget ? 'text-yellow-600' : 
-                            'text-green-600'
-                          }`}>
-                            {currencyFormat.placement === 'before' ? currencySymbol : ''}
-                            {remaining.toFixed(2)}
-                            {currencyFormat.placement === 'after' ? currencySymbol : ''}
+                          <div className="text-sm font-medium text-gray-900">
+                            {formatCurrency(remaining, currencyFormat)}
                           </div>
                           <div className="mt-1 w-full bg-gray-200 rounded-full h-1">
                             <div
                               className={`h-1 rounded-full ${
                                 remaining < 0 ? 'bg-red-500' : 
-                                remaining < 0.2 * category.budget ? 'bg-yellow-500' : 
+                                remaining < 0.2 * (category.budget || 1) ? 'bg-yellow-500' : 
                                 'bg-green-500'
                               }`}
                               style={{ width: `${percentUsed}%` }}

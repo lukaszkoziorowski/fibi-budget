@@ -39,8 +39,24 @@ interface BudgetState {
 
 const initialState: BudgetState = {
   categories: [
-    { id: '1', name: 'Food', budget: 1000 },
-    { id: '2', name: 'Transport', budget: 500 }
+    { 
+      id: '1', 
+      name: 'Food', 
+      budget: 1000,
+      groupId: null,
+      userId: 'user1',
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z'
+    },
+    { 
+      id: '2', 
+      name: 'Transport', 
+      budget: 500,
+      groupId: null,
+      userId: 'user1',
+      createdAt: '2024-01-01T00:00:00.000Z',
+      updatedAt: '2024-01-01T00:00:00.000Z'
+    }
   ],
   transactions: [
     { id: '1', amount: 500, categoryId: '1', date: new Date().toISOString() },
@@ -59,6 +75,7 @@ const initialState: BudgetState = {
   globalCurrency: 'USD',
   currencyFormat: {
     currency: 'USD',
+    locale: 'en-US',
     placement: 'before',
     numberFormat: {
       minimumFractionDigits: 2,

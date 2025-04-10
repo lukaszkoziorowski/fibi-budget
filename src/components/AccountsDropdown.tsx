@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '@/store';
@@ -27,7 +27,6 @@ const AccountsDropdown = ({ isCollapsed }: AccountsDropdownProps) => {
   const [newAccountType, setNewAccountType] = useState<Account['type']>('checking');
   const [newAccountBalance, setNewAccountBalance] = useState('0');
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const formRef = useRef<HTMLDivElement>(null);
 
   const accounts = useSelector((state: RootState) => state.accounts.accounts);
   const activeAccountId = useSelector((state: RootState) => state.accounts.activeAccountId);

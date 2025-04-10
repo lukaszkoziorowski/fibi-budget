@@ -1,11 +1,9 @@
-import React from 'react';
 import { render, fireEvent, screen } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import CurrencySettings from '@/components/CurrencySettings';
 import { BudgetState } from '@/types';
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import userEvent from '@testing-library/user-event';
+import { describe, it, expect, beforeEach } from 'vitest';
 import budgetReducer from '@/store/budgetSlice';
 
 describe('CurrencySettings', () => {
@@ -24,6 +22,7 @@ describe('CurrencySettings', () => {
         categoryGroups: [],
         currencyFormat: {
           currency: 'USD',
+          locale: 'en-US',
           placement: 'after',
           numberFormat: {
             minimumFractionDigits: 2,

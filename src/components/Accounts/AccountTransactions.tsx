@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { Account, Transaction } from '../../types/account';
 import { formatCurrency } from '../../utils/formatters';
 import TransactionList from './TransactionList';
 

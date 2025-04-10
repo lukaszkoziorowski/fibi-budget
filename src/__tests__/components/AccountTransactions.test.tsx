@@ -56,6 +56,7 @@ const renderWithProvider = (component: React.ReactElement) => {
         transactions: mockTransactions,
         isLoading: false,
         error: null,
+        activeAccountId: '1'
       },
     },
   });

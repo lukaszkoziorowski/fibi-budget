@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
-import { Transaction } from '@/types';
 import { getExchangeRate } from '@/utils/currencies';
 
-export const useExchangeRates = (transactions: Transaction[], targetCurrency: string) => {
+export const useExchangeRates = (targetCurrency: string) => {
   const convertAmount = useMemo(() => {
     return async (amount: number, fromCurrency: string = targetCurrency): Promise<number> => {
       if (fromCurrency === targetCurrency) {

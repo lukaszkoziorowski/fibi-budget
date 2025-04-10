@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store';
 import {
@@ -8,9 +8,7 @@ import {
   toggleGroupCollapse,
   moveCategoryToGroup,
   updateCategory,
-  deleteCategory,
-  reorderCategories
-} from '@/store/budgetSlice';
+  deleteCategory} from '@/store/budgetSlice';
 import { Category } from '@/types';
 import { CategoryRow } from '../CategoryList/CategoryRow';
 import { Dialog } from '@headlessui/react';
@@ -24,7 +22,28 @@ const CategoryGroups: React.FC = () => {
   const dispatch = useDispatch();
   const { categoryGroups, categories, transactions, currentMonth } = useSelector((state: RootState) => state.budget);
   const { currencyFormat, currencySymbol } = useCurrency();
-  const { convertAmount } = useExchangeRates(transactions, currencyFormat.currency);
+  const { convertAmount } = useExchangeRates(currencyFormat.currency);
+
+  // State for category activities
+  const [categoryActivities, setCategoryActivities] = useState<Record<string, number>>({});
+
+  // Calculate activities for all categories
+  useEffect(() => {
+    const calculateActivities = async () => {
+      const activities: Record<string, number> = {};
+      for (const category of categories) {
+        activities[category.id] = await calculateCategoryActivity(
+          category.id,
+          transactions,
+          currentMonth,
+          convertAmount
+        );
+      }
+      setCategoryActivities(activities);
+    };
+
+    calculateActivities();
+  }, [categories, transactions, currentMonth, convertAmount]);
 
   // State for add/edit group modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -48,6 +67,32 @@ const CategoryGroups: React.FC = () => {
   const ungroupedCategories = categories.filter(c => !c.groupId || !categoryGroups.find(g => g.id === c.groupId));
   const validGroups = categoryGroups.filter(group => group.name && group.name.trim() !== '');
 
+  // Helper functions for styling
+  const getProgressClass = useCallback((remaining: number, budget: number) => {
+    if (remaining < 0) return "bg-red-500";
+    if (remaining < 0.2 * budget) return "bg-yellow-500";
+    return "bg-green-500";
+  }, []);
+
+  const getTextColorClass = useCallback((remaining: number, budget: number) => {
+    if (remaining < 0) return "text-red-600";
+    if (remaining < 0.2 * budget) return "text-yellow-600";
+    return "text-green-600";
+  }, []);
+
+  const getCategoryDetails = useCallback((category: Category) => {
+    const activity = categoryActivities[category.id] || 0;
+    const remaining = category.budget - activity;
+    const percentUsed = category.budget > 0 ? Math.min((activity / category.budget) * 100, 100) : 0;
+
+    return {
+      activity,
+      remaining,
+      percentUsed,
+      progressClass: getProgressClass(remaining, category.budget),
+      textColorClass: getTextColorClass(remaining, category.budget)
+    };
+  }, [categoryActivities, getProgressClass, getTextColorClass]);
 
   const handleEditGroup = (id: string, name: string) => {
     setModalMode('edit');
@@ -102,49 +147,17 @@ const CategoryGroups: React.FC = () => {
     }
   };
 
-  const handleDrop = (e: React.DragEvent, groupId: string, targetCategoryId?: string) => {
+  const handleDrop = (e: React.DragEvent, groupId: string) => {
     e.preventDefault();
-    if (!draggedCategoryId) return;
-
-    const draggedCategory = categories.find(c => c.id === draggedCategoryId);
-    if (!draggedCategory) return;
-
-    // If dropping on a category within the same group, reorder
-    if (targetCategoryId && draggedCategory.groupId === groupId) {
-      const groupCategories = categories.filter(c => c.groupId === groupId);
-      const otherCategories = categories.filter(c => c.groupId !== groupId);
-      
-      const draggedIndex = groupCategories.findIndex(c => c.id === draggedCategoryId);
-      const targetIndex = groupCategories.findIndex(c => c.id === targetCategoryId);
-      
-      if (draggedIndex === -1 || targetIndex === -1) return;
-      
-      // Create a new array with the reordered categories
-      const newGroupCategories = [...groupCategories];
-      const [movedCategory] = newGroupCategories.splice(draggedIndex, 1);
-      
-      // Adjust target index if we're moving an item down
-      const adjustedTargetIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
-      newGroupCategories.splice(adjustedTargetIndex, 0, movedCategory);
-      
-      // Combine reordered group categories with other categories
-      const allCategories = [...otherCategories];
-      allCategories.push(...newGroupCategories);
-      
-      dispatch(reorderCategories(allCategories));
-    } else {
-      // If dropping on a group, move the category to that group
-      dispatch(moveCategoryToGroup({ categoryId: draggedCategoryId, groupId }));
+    if (draggedCategoryId) {
+      const category = categories.find(c => c.id === draggedCategoryId);
+      if (category && category.groupId !== groupId) {
+        dispatch(moveCategoryToGroup({ categoryId: draggedCategoryId, groupId }));
+      }
     }
     
     setDraggedCategoryId(null);
   };
-
-  const handleEditCategory = useCallback((category: Category) => {
-    setEditingCategoryId(category.id);
-    setEditingCategoryName(category.name);
-    setEditingCategoryBudget(category.budget.toString());
-  }, []);
 
   const handleUpdateCategory = useCallback((id: string) => {
     const category = categories.find((c) => c.id === id);
@@ -267,24 +280,7 @@ const CategoryGroups: React.FC = () => {
                 </thead>
                 <tbody>
                   {ungroupedCategories.map((category) => {
-                    const activity = calculateCategoryActivity(
-                      category.id,
-                      transactions,
-                      currentMonth,
-                      convertAmount
-                    );
-                    const remaining = category.budget - activity;
-                    const percentUsed = category.budget > 0 ? Math.min((activity / category.budget) * 100, 100) : 0;
-                    const progressClass = remaining < 0 
-                      ? "bg-red-500" 
-                      : remaining < 0.2 * category.budget 
-                        ? "bg-yellow-500" 
-                        : "bg-green-500";
-                    const textColorClass = remaining < 0 
-                      ? "text-red-600" 
-                      : remaining < 0.2 * category.budget 
-                        ? "text-yellow-600" 
-                        : "text-green-600";
+                    const { activity, remaining, percentUsed, progressClass, textColorClass } = getCategoryDetails(category);
                     const isEditing = editingCategoryId === category.id;
 
                     return (
@@ -305,17 +301,12 @@ const CategoryGroups: React.FC = () => {
                         onDragStart={(e) => handleDragStart(e, category.id)}
                         onDragEnd={handleDragEnd}
                         onDragOver={(e) => e.preventDefault()}
-                        onDrop={(e) => handleDrop(e, '', category.id)}
+                        onDrop={(e) => handleDrop(e, category.id)}
                         onEditingNameChange={setEditingCategoryName}
                         onEditingBudgetChange={setEditingCategoryBudget}
                         onUpdate={() => handleUpdateCategory(category.id)}
                         onCancelEdit={handleCancelEdit}
                         onDelete={() => handleDeleteCategory(category.id)}
-                        onClick={() => {
-                          if (!isEditing) {
-                            handleEditCategory(category);
-                          }
-                        }}
                       />
                     );
                   })}
@@ -394,16 +385,7 @@ const CategoryGroups: React.FC = () => {
                   <table className="min-w-full divide-y divide-gray-200">
                     <tbody className="bg-white divide-y divide-gray-200">
                       {groupCategories.map((category) => {
-                        const activity = calculateCategoryActivity(
-                          category.id,
-                          transactions,
-                          currentMonth,
-                          convertAmount
-                        );
-                        const remaining = category.budget - activity;
-                        const percentUsed = category.budget > 0 ? Math.min((activity / category.budget) * 100, 100) : 0;
-                        const progressClass = percentUsed >= 100 ? 'bg-red-500' : 'bg-green-500';
-                        const textColorClass = percentUsed >= 100 ? 'text-red-600' : 'text-green-600';
+                        const { activity, remaining, percentUsed, progressClass, textColorClass } = getCategoryDetails(category);
                         const isEditing = editingCategoryId === category.id;
 
                         return (
@@ -428,17 +410,12 @@ const CategoryGroups: React.FC = () => {
                               e.currentTarget.classList.add('bg-blue-50');
                               e.dataTransfer.dropEffect = 'move';
                             }}
-                            onDrop={(e) => handleDrop(e, group.id, category.id)}
+                            onDrop={(e) => handleDrop(e, category.id)}
                             onEditingNameChange={setEditingCategoryName}
                             onEditingBudgetChange={setEditingCategoryBudget}
                             onUpdate={() => handleUpdateCategory(category.id)}
                             onCancelEdit={handleCancelEdit}
                             onDelete={() => handleDeleteCategory(category.id)}
-                            onClick={() => {
-                              if (!isEditing) {
-                                handleEditCategory(category);
-                              }
-                            }}
                           />
                         );
                       })}

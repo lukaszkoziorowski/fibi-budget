@@ -56,6 +56,7 @@ const loadState = (): AccountsState => {
         color: '#9333ea', // Purple
         isHidden: false,
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(), // Added missing required field
       }
     ],
     activeAccountId: null,

@@ -1,37 +1,30 @@
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
-import { Account, AccountType } from '../../types/account';
-import { deleteAccount } from '../../store/accountSlice';
+import { Account, deleteAccount } from '../../store/accountsSlice';
 import { formatCurrency } from '../../utils/formatters';
-import { useAuth } from '../../contexts/AuthContext';
 import AccountTransactionPage from './AccountTransactionPage';
 
-const accountTypeIcons: Record<AccountType, string> = {
+const accountTypeIcons: Record<Account['type'], string> = {
   checking: '🏦',
   savings: '💰',
-  creditCard: '💳',
+  credit: '💳',
   cash: '💵',
-  lineOfCredit: '📝',
   investment: '📈',
-  other: '📁',
 };
 
-const accountTypeColors: Record<AccountType, string> = {
+const accountTypeColors: Record<Account['type'], string> = {
   checking: 'bg-blue-100 text-blue-800',
   savings: 'bg-green-100 text-green-800',
-  creditCard: 'bg-purple-100 text-purple-800',
+  credit: 'bg-purple-100 text-purple-800',
   cash: 'bg-yellow-100 text-yellow-800',
-  lineOfCredit: 'bg-red-100 text-red-800',
   investment: 'bg-indigo-100 text-indigo-800',
-  other: 'bg-gray-100 text-gray-800',
 };
 
 const Accounts: React.FC = () => {
-  const { currentUser } = useAuth();
   const dispatch = useDispatch();
   const accounts = useSelector((state: RootState) => state.accounts.accounts);
-  const [selectedType, setSelectedType] = useState<AccountType | 'all'>('all');
+  const [selectedType, setSelectedType] = useState<Account['type'] | 'all'>('all');
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
   const filteredAccounts = accounts.filter(account => 
@@ -61,17 +54,15 @@ const Accounts: React.FC = () => {
         <div className="flex items-center space-x-4">
           <select
             value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value as AccountType | 'all')}
+            onChange={(e) => setSelectedType(e.target.value as Account['type'] | 'all')}
             className="rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
           >
             <option value="all">All Types</option>
             <option value="checking">Checking</option>
             <option value="savings">Savings</option>
-            <option value="creditCard">Credit Card</option>
+            <option value="credit">Credit Card</option>
             <option value="cash">Cash</option>
-            <option value="lineOfCredit">Line of Credit</option>
             <option value="investment">Investment</option>
-            <option value="other">Other</option>
           </select>
           <button
             onClick={() => {/* TODO: Open add account modal */}}
@@ -96,8 +87,8 @@ const Accounts: React.FC = () => {
                     <span className="text-2xl">{accountTypeIcons[account.type]}</span>
                     <h2 className="text-xl font-semibold">{account.name}</h2>
                   </div>
-                  {account.institutionName && (
-                    <p className="text-gray-600 text-sm mt-1">{account.institutionName}</p>
+                  {account.notes && (
+                    <p className="text-gray-600 text-sm mt-1">{account.notes}</p>
                   )}
                 </div>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium ${accountTypeColors[account.type]}`}>

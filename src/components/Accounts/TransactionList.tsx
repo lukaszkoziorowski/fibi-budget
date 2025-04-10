@@ -5,13 +5,13 @@ import { Transaction } from '../../types/account';
 import { addTransaction, deleteTransaction } from '../../store/accountSlice';
 import { formatCurrency } from '../../utils/formatters';
 import { useAuth } from '../../contexts/AuthContext';
+import { v4 as uuidv4 } from 'uuid';
 
 interface TransactionListProps {
   accountId: string;
 }
-
 const TransactionList: React.FC<TransactionListProps> = ({ accountId }) => {
-  const { user } = useAuth();
+  const { currentUser: user } = useAuth();
   const dispatch = useDispatch();
   const transactions = useSelector((state: RootState) => 
     state.accounts.transactions.filter(t => t.accountId === accountId)
@@ -28,7 +28,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ accountId }) => {
     if (!user) return;
 
     const transaction: Transaction = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       accountId,
       amount: parseFloat(newTransaction.amount),
       description: newTransaction.description,
@@ -36,6 +36,7 @@ const TransactionList: React.FC<TransactionListProps> = ({ accountId }) => {
       userId: user.uid,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      isReconciled: false
     };
 
     dispatch(addTransaction(transaction));
