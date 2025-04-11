@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store';
 import { toggleGroupCollapse, moveCategoryToGroup, addCategoryGroup, updateCategoryGroup, deleteCategoryGroup, addCategory, deleteCategory, updateCategory } from '@/store/budgetSlice';
@@ -9,6 +9,26 @@ import { useExchangeRates } from '@/hooks/useExchangeRates';
 import { calculateCategoryActivity } from '@/utils/categoryUtils';
 import { Dialog } from '@headlessui/react';
 import { formatCurrency, parseCurrency } from '@/utils/formatters';
+import { Transaction as BudgetTransaction } from '@/types';
+import { Transaction as AccountTransaction } from '@/store/accountsSlice';
+
+// Add type adapter function
+const adaptTransaction = (transaction: AccountTransaction | BudgetTransaction): BudgetTransaction => {
+  if ('accountId' in transaction) {
+    // It's an AccountTransaction
+    return {
+      id: transaction.id,
+      date: transaction.date,
+      description: transaction.description,
+      amount: transaction.type === 'credit' ? transaction.amount : -transaction.amount,
+      type: transaction.type === 'credit' ? 'income' : 'expense',
+      categoryId: transaction.categoryId,
+      currency: transaction.currency
+    };
+  }
+  // It's already a BudgetTransaction
+  return transaction;
+};
 
 interface EditingCell {
   categoryId: string;
@@ -22,8 +42,9 @@ interface CategoryActivity {
 
 export const UnifiedCategoryTable: React.FC = () => {
   const dispatch = useDispatch();
-  const { categories, categoryGroups, transactions, currentMonth } = useSelector((state: RootState) => state.budget);
-  const { currencyFormat, currencySymbol } = useCurrency();
+  const { categories, categoryGroups, transactions: budgetTransactions, currentMonth } = useSelector((state: RootState) => state.budget);
+  const { transactions: accountTransactions } = useSelector((state: RootState) => state.accounts);
+  const { currencyFormat } = useCurrency();
   const { convertAmount } = useExchangeRates(currencyFormat.currency);
   const [draggedCategoryId, setDraggedCategoryId] = useState<string | null>(null);
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
@@ -31,6 +52,11 @@ export const UnifiedCategoryTable: React.FC = () => {
   const [groupName, setGroupName] = useState('');
   const [modalMode, setModalMode] = useState<'add' | 'edit' | 'delete'>('add');
   const { user, loading } = useAuth();
+  
+  // Combine transactions from both sources
+  const allTransactions = useMemo(() => {
+    return [...budgetTransactions, ...accountTransactions.map(adaptTransaction)];
+  }, [budgetTransactions, accountTransactions]);
   
   // New state for category modal
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -57,20 +83,24 @@ export const UnifiedCategoryTable: React.FC = () => {
 
     const loadActivities = async () => {
       try {
+        console.log('Recalculating category activities with transactions:', allTransactions.length);
+        
         const activities = await Promise.all(
           categories.map(async (category) => {
             const activity = await calculateCategoryActivity(
               category.id,
-              transactions,
+              allTransactions,
               currentMonth,
               convertAmount
             );
+            console.log(`Category ${category.name} activity: ${activity}`);
             return {
               id: category.id,
               activity: activity || 0
             };
           })
         );
+        
         if (isMounted) {
           setCategoryActivities(activities);
         }
@@ -90,7 +120,13 @@ export const UnifiedCategoryTable: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [categories, transactions, currentMonth, convertAmount]);
+  }, [categories, allTransactions, currentMonth, convertAmount]);
+
+  // Add a function to get activity for a category
+  const getCategoryActivity = (categoryId: string) => {
+    const activity = categoryActivities.find(a => a.id === categoryId);
+    return activity ? activity.activity : 0;
+  };
 
   const handleAddCategory = useCallback((groupId: string) => {
     setSelectedGroupId(groupId);
@@ -259,9 +295,7 @@ export const UnifiedCategoryTable: React.FC = () => {
           <tbody className="bg-white divide-y divide-gray-200">
             {categoryGroups.map((group) => {
               const groupCategories = categories.filter(c => c.groupId === group.id);
-              const groupActivity = categoryActivities
-                .filter(activity => groupCategories.some(cat => cat.id === activity.id))
-                .reduce((sum, activity) => sum + activity.activity, 0);
+              const groupActivity = groupCategories.reduce((sum, cat) => sum + getCategoryActivity(cat.id), 0);
               const groupBudget = groupCategories.reduce((sum, cat) => sum + cat.budget, 0);
               const groupRemaining = groupBudget - groupActivity;
 
@@ -360,8 +394,7 @@ export const UnifiedCategoryTable: React.FC = () => {
                   </tr>
                   {/* Category Rows */}
                   {!group.isCollapsed && groupCategories.map((category) => {
-                    const activityData = categoryActivities.find(a => a.id === category.id);
-                    const activity = activityData?.activity ?? 0;
+                    const activity = getCategoryActivity(category.id);
                     const remaining = (category.budget || 0) - activity;
                     const percentUsed = (category.budget || 0) > 0 ? Math.min((activity / (category.budget || 1)) * 100, 100) : 0;
                     const isEditingName = editingCell?.categoryId === category.id && editingCell?.field === 'name';
