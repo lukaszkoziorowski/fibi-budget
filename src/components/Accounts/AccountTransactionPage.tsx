@@ -50,6 +50,23 @@ const AccountTransactionPage: React.FC<AccountTransactionPageProps> = ({ account
     dispatch(deleteTransaction(transactionId));
   };
 
+  // Calculate totals
+  const totalIncome = useMemo(() => {
+    const creditTransactions = transactions.filter(t => t.type === 'credit');
+    return creditTransactions.reduce((sum, t) => sum + t.amount, 0);
+  }, [transactions]);
+
+  const totalExpenses = useMemo(() => {
+    const debitTransactions = transactions.filter(t => t.type === 'debit');
+    return debitTransactions.reduce((sum, t) => sum + t.amount, 0);
+  }, [transactions]);
+
+  const workingBalance = account.balance;
+  const currentBalance = workingBalance + totalIncome - Math.abs(totalExpenses);
+
+  // Use absolute value for display purposes
+  const displayExpenses = Math.abs(totalExpenses);
+
   return (
     <div className="container mx-auto px-4 py-6">
       {/* Header */}
@@ -63,11 +80,26 @@ const AccountTransactionPage: React.FC<AccountTransactionPageProps> = ({ account
       </div>
 
       {/* Balance Summary */}
-      <div className="flex items-center space-x-4 mb-6 bg-white rounded-lg shadow p-4">
-        <div className="flex items-center">
-          <div className="text-gray-600">
-            <span className="text-sm">Current Balance</span>
-            <p className="text-lg font-semibold">{formatCurrency(account.balance, currencyFormat)}</p>
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 className="text-lg font-semibold mb-4">Balance Calculation</h2>
+        <div className="space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Working Balance:</span>
+            <span className="font-medium">{formatCurrency(workingBalance, currencyFormat)}</span>
+          </div>
+          <div className="flex justify-between items-center text-green-600">
+            <span>Total Income:</span>
+            <span className="font-medium">+{formatCurrency(totalIncome, currencyFormat)}</span>
+          </div>
+          <div className="flex justify-between items-center text-red-600">
+            <span>Total Expenses:</span>
+            <span className="font-medium">-{formatCurrency(displayExpenses, currencyFormat)}</span>
+          </div>
+          <div className="border-t pt-2 mt-2">
+            <div className="flex justify-between items-center">
+              <span className="font-semibold">Current Balance:</span>
+              <span className="font-bold text-lg">{formatCurrency(currentBalance, currencyFormat)}</span>
+            </div>
           </div>
         </div>
       </div>
