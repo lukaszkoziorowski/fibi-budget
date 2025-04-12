@@ -129,6 +129,14 @@
     @apply bg-[var(--color-background-light)];
   }
 
+  .bg-surface {
+    @apply bg-[var(--color-surface)];
+  }
+
+  .bg-surface-dark {
+    @apply bg-[var(--color-surface-dark)];
+  }
+
   .bg-surface-active {
     @apply bg-[var(--color-surface-active)];
   }
