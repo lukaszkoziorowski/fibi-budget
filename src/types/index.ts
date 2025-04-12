@@ -36,6 +36,7 @@ export interface Transaction {
   type: 'income' | 'expense';
   categoryId: string | null;
   currency: string;
+  accountId: string;
 }
 
 export interface BudgetState {

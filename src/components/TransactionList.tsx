@@ -11,7 +11,11 @@ interface EditingState {
   field: 'date' | 'description' | 'categoryId' | 'type' | 'amount' | null;
 }
 
-const TransactionList = () => {
+interface TransactionListProps {
+  accountId?: string;
+}
+
+const TransactionList: React.FC<TransactionListProps> = ({ accountId }) => {
   const dispatch = useDispatch();
   const transactions = useSelector((state: RootState) => state.budget.transactions);
   const categories = useSelector((state: RootState) => state.budget.categories);

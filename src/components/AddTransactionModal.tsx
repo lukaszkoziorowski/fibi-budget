@@ -10,9 +10,10 @@ import { formatCurrency } from '@/utils/formatters';
 interface AddTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  accountId: string;
 }
 
-const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
+const AddTransactionModal = ({ isOpen, onClose, accountId }: AddTransactionModalProps) => {
   const dispatch = useDispatch();
   const categories = useSelector((state: RootState) => state.budget.categories);
   const transactions = useSelector((state: RootState) => state.budget.transactions);
@@ -40,13 +41,13 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
 
     dispatch(
       addTransaction({
-        id: Date.now().toString(),
         amount: numericAmount,
         description,
         categoryId: type === 'expense' ? categoryId : 'income',
         date: new Date().toISOString(),
         type,
         currency: globalCurrency,
+        accountId
       })
     );
 

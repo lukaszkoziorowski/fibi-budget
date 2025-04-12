@@ -109,6 +109,10 @@ const accountsSlice = createSlice({
       state.activeAccountId = action.payload;
       saveState(state);
     },
+    deleteTransaction: (state, action: PayloadAction<string>) => {
+      state.transactions = state.transactions.filter(t => t.id !== action.payload);
+      saveState(state);
+    },
   },
 });
 
@@ -116,7 +120,8 @@ export const {
   addAccount, 
   updateAccount, 
   deleteAccount, 
-  setActiveAccount 
+  setActiveAccount,
+  deleteTransaction 
 } = accountsSlice.actions;
 
 export default accountsSlice.reducer; 

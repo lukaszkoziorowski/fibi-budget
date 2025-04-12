@@ -23,7 +23,8 @@ const adaptTransaction = (transaction: AccountTransaction | BudgetTransaction): 
       amount: transaction.type === 'credit' ? transaction.amount : -transaction.amount,
       type: transaction.type === 'credit' ? 'income' : 'expense',
       categoryId: transaction.categoryId,
-      currency: transaction.currency
+      currency: transaction.currency,
+      accountId: transaction.accountId
     };
   }
   // It's already a BudgetTransaction
@@ -55,7 +56,8 @@ export const UnifiedCategoryTable: React.FC = () => {
   
   // Combine transactions from both sources
   const allTransactions = useMemo(() => {
-    return [...budgetTransactions, ...accountTransactions.map(adaptTransaction)];
+    const accountTxs = accountTransactions || [];
+    return [...budgetTransactions, ...accountTxs.map(adaptTransaction)];
   }, [budgetTransactions, accountTransactions]);
   
   // New state for category modal

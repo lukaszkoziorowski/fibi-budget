@@ -6,7 +6,11 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { formatCurrency } from '@/utils/formatters';
 import { CurrencyFormat } from '@/types';
 
-const BudgetSettings: React.FC = () => {
+interface BudgetSettingsProps {
+  onBack: () => void;
+}
+
+const BudgetSettings: React.FC<BudgetSettingsProps> = ({ onBack }) => {
   const dispatch = useDispatch();
   const { budgetName, currencyFormat, globalCurrency } = useSelector((state: RootState) => state.budget);
   
@@ -265,7 +269,8 @@ const BudgetSettings: React.FC = () => {
                         currency: localCurrency,
                         placement: localCurrencyPlacement,
                         numberFormat: localNumberFormat,
-                        dateFormat: localDateFormat
+                        dateFormat: localDateFormat,
+                        locale: currencyFormat.locale
                       })}
                     </div>
                   </div>
@@ -285,7 +290,8 @@ const BudgetSettings: React.FC = () => {
                     currency: localCurrency,
                     placement: localCurrencyPlacement,
                     numberFormat: localNumberFormat,
-                    dateFormat: localDateFormat
+                    dateFormat: localDateFormat,
+                    locale: currencyFormat.locale
                   })}
                 </p>
               )}
