@@ -87,7 +87,7 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
                 to={item.path}
                 className={`flex flex-col items-center justify-center w-full h-full ${
                   isActive(item.path)
-                    ? 'text-primary'
+                    ? 'bg-surface-active text-content-active'
                     : 'text-gray-500 hover:text-gray-500'
                 }`}
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -198,7 +198,7 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
                         to={item.path}
                         className={`flex items-center justify-center md:justify-start h-10 px-2 text-sm rounded-md ${
                           isActive(item.path)
-                            ? 'bg-primary text-white hover:text-white'
+                            ? 'bg-surface-active text-content-active hover:text-content-active'
                             : 'text-gray-700 hover:bg-gray-100 hover:text-gray-700'
                         }`}
                       >

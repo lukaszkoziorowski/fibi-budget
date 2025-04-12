@@ -7,7 +7,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#58009F',
+        primary: '#222222',
         secondary: '#EDE4F4',
         background: '#F3F4F6',
         content: {
@@ -15,7 +15,10 @@ module.exports = {
           secondary: '#6A6A6A',
           inverted: '#FFFFFF'
         },
-        surface: '#FFFFFF'
+        surface: {
+          DEFAULT: '#FFFFFF',
+          dark: '#F1F1F1'
+        }
       },
       borderRadius: {
         'button': '12px',

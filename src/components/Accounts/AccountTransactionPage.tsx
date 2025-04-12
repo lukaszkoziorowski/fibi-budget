@@ -108,7 +108,7 @@ const AccountTransactionPage: React.FC<AccountTransactionPageProps> = ({ account
       <div className="flex items-center justify-end mb-6">
         <button 
           onClick={() => setIsAddTransactionModalOpen(true)}
-          className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-[rgb(88,0,159)] hover:bg-[rgb(73,0,132)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[rgb(88,0,159)]"
+          className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
         >
           <PlusIcon className="h-5 w-5 mr-2" />
           Add Transaction

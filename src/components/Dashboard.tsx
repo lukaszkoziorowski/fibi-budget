@@ -45,7 +45,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen">
       <main className="max-w-screen-2xl mx-auto px-4 py-8">
         {/* Budget Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8" data-testid="dashboard-cards">
@@ -137,7 +137,7 @@ const Dashboard = () => {
           <div className="flex gap-3 w-full sm:w-auto">
             <button
               onClick={() => addTransactionModal.openModal()}
-              className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-[rgb(88,0,159)] hover:bg-[rgb(73,0,132)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[rgb(88,0,159)]"
+              className="flex-1 sm:flex-none inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
             >
               Add Transaction
             </button>
@@ -158,6 +158,7 @@ const Dashboard = () => {
           <AddTransactionModal
             isOpen={addTransactionModal.isOpen}
             onClose={addTransactionModal.closeModal}
+            accountId="default"
           />
         )}
 

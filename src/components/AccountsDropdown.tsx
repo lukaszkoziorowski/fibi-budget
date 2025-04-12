@@ -120,7 +120,7 @@ const AccountsDropdown = ({ isCollapsed }: AccountsDropdownProps) => {
               }}
               className={`flex items-center w-full px-4 py-2 text-sm ${
                 activeAccount?.id === account.id 
-                  ? 'bg-purple-50 text-purple-700' 
+                  ? 'bg-[#f5f8ff] text-[#3772ff]' 
                   : 'text-gray-700 hover:bg-gray-50'
               }`}
             >
@@ -140,9 +140,9 @@ const AccountsDropdown = ({ isCollapsed }: AccountsDropdownProps) => {
         
         <button
           onClick={handleShowAddForm}
-          className="flex items-center w-full px-4 py-2 text-sm text-purple-600 hover:bg-gray-50"
+          className="flex items-center w-full px-4 py-2 text-sm text-[#3772ff] hover:bg-gray-50"
         >
-          <PlusIcon className="w-4 h-4 mr-2" />
+          <PlusIcon className="w-4 h-4 mr-2 text-[#3772ff]" />
           Add Account
         </button>
       </>
