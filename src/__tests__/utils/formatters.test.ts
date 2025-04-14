@@ -5,6 +5,7 @@ describe('formatters', () => {
   describe('formatCurrency', () => {
     const mockFormat: CurrencyFormat = {
       currency: 'USD',
+      locale: 'en-US',
       placement: 'before',
       numberFormat: {
         minimumFractionDigits: 2,
@@ -44,21 +45,20 @@ describe('formatters', () => {
     it('handles different number formats', () => {
       const germanFormat: CurrencyFormat = {
         ...mockFormat,
+        locale: 'de-DE',
         numberFormat: {
           minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-          decimalSeparator: ',',
-          thousandsSeparator: '.'
+          maximumFractionDigits: 2
         }
       };
       expect(formatCurrency(1234.5, germanFormat)).toBe('$1,234.50');
 
       const spaceFormat: CurrencyFormat = {
         ...mockFormat,
+        locale: 'fr-FR',
         numberFormat: {
           minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-          thousandsSeparator: ' '
+          maximumFractionDigits: 2
         }
       };
       expect(formatCurrency(1234.5, spaceFormat)).toBe('$1,234.50');

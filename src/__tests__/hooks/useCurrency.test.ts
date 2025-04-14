@@ -4,6 +4,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { useCurrency } from '@/hooks/useCurrency';
 import { BudgetState } from '@/types';
 import type { PropsWithChildren } from 'react';
+import React from 'react';
 
 const initialState: BudgetState = {
   categories: [],
@@ -12,6 +13,7 @@ const initialState: BudgetState = {
   globalCurrency: 'USD',
   currencyFormat: {
     currency: 'USD',
+    locale: 'en-US',
     placement: 'before',
     numberFormat: {
       minimumFractionDigits: 2,
@@ -32,7 +34,7 @@ const createWrapper = (state: BudgetState) => {
       }
     });
 
-    return <Provider store={store}>{children}</Provider>;
+    return React.createElement(Provider, { store, children }, null);
   };
 };
 
@@ -53,7 +55,8 @@ describe('useCurrency', () => {
       globalCurrency: 'EUR',
       currencyFormat: {
         ...initialState.currencyFormat,
-        currency: 'EUR'
+        currency: 'EUR',
+        locale: 'de-DE'
       }
     };
 
@@ -67,7 +70,8 @@ describe('useCurrency', () => {
       globalCurrency: 'GBP',
       currencyFormat: {
         ...initialState.currencyFormat,
-        currency: 'GBP'
+        currency: 'GBP',
+        locale: 'en-GB'
       }
     };
 
@@ -81,7 +85,8 @@ describe('useCurrency', () => {
       globalCurrency: 'JPY',
       currencyFormat: {
         ...initialState.currencyFormat,
-        currency: 'JPY'
+        currency: 'JPY',
+        locale: 'ja-JP'
       }
     };
 
@@ -95,7 +100,8 @@ describe('useCurrency', () => {
       globalCurrency: 'XYZ',
       currencyFormat: {
         ...initialState.currencyFormat,
-        currency: 'XYZ'
+        currency: 'XYZ',
+        locale: 'en-US'
       }
     };
 

@@ -2,7 +2,6 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { formatCurrency } from '../../utils/formatters';
-import TransactionList from './TransactionList';
 
 interface AccountTransactionsProps {
   accountId: string;
@@ -54,12 +53,14 @@ const AccountTransactions: React.FC<AccountTransactionsProps> = ({ accountId, on
           <p className="text-2xl font-bold mt-1">{formatCurrency(workingBalance)}</p>
         </div>
       </div>
-
-      <div className="bg-white rounded-lg shadow-md">
-        <TransactionList accountId={accountId} />
-      </div>
     </div>
   );
 };
 
 export default AccountTransactions; 
+ 
+ 
+ 
+ 
+ 
+ 

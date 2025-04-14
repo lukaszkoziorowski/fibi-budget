@@ -38,7 +38,12 @@ const loadState = (): AccountsState => {
   try {
     const savedState = localStorage.getItem('fibi-accounts');
     if (savedState) {
-      return JSON.parse(savedState);
+      const parsedState = JSON.parse(savedState);
+      // Ensure transactions array exists
+      if (!parsedState.transactions) {
+        parsedState.transactions = [];
+      }
+      return parsedState;
     }
   } catch (e) {
     console.error('Error loading accounts state from localStorage:', e);
@@ -56,7 +61,7 @@ const loadState = (): AccountsState => {
         color: '#9333ea', // Purple
         isHidden: false,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(), // Added missing required field
+        updatedAt: new Date().toISOString(),
       }
     ],
     activeAccountId: null,
@@ -109,6 +114,38 @@ const accountsSlice = createSlice({
       state.activeAccountId = action.payload;
       saveState(state);
     },
+    addTransaction: (state, action: PayloadAction<Omit<Transaction, 'id'>>) => {
+      const newTransaction: Transaction = {
+        ...action.payload,
+        id: uuidv4(),
+      };
+      state.transactions.unshift(newTransaction); // Add to the beginning of the array
+      saveState(state);
+    },
+    updateTransaction: (state, action: PayloadAction<Transaction>) => {
+      const index = state.transactions.findIndex(t => t.id === action.payload.id);
+      if (index !== -1) {
+        const oldTransaction = state.transactions[index];
+        const account = state.accounts.find(acc => acc.id === action.payload.accountId);
+        if (account) {
+          account.balance -= oldTransaction.amount;
+          account.balance += action.payload.amount;
+        }
+        state.transactions[index] = action.payload;
+        saveState(state);
+      }
+    },
+    deleteTransaction: (state, action: PayloadAction<string>) => {
+      const transaction = state.transactions.find(t => t.id === action.payload);
+      if (transaction) {
+        const account = state.accounts.find(acc => acc.id === transaction.accountId);
+        if (account) {
+          account.balance -= transaction.amount;
+        }
+        state.transactions = state.transactions.filter(t => t.id !== action.payload);
+        saveState(state);
+      }
+    },
   },
 });
 
@@ -116,7 +153,10 @@ export const {
   addAccount, 
   updateAccount, 
   deleteAccount, 
-  setActiveAccount 
+  setActiveAccount,
+  addTransaction,
+  updateTransaction,
+  deleteTransaction,
 } = accountsSlice.actions;
 
-export default accountsSlice.reducer; 
+export default accountsSlice.reducer;

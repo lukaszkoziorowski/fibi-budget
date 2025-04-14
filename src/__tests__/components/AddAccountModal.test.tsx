@@ -88,3 +88,9 @@ describe('AddAccountModal Component', () => {
     expect(screen.getByLabelText('Starting Balance')).toBeInvalid();
   });
 }); 
+ 
+ 
+ 
+ 
+ 
+ 

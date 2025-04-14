@@ -16,6 +16,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useDispatch } from 'react-redux';
 import { loadUserData } from './store/budgetSlice';
 import AccountTransactionPage from './components/Accounts/AccountTransactionPage';
+import AllAccountsPage from './components/Accounts/AllAccountsPage';
 
 interface RouteWrapperProps {
   children: React.ReactNode;
@@ -178,6 +179,10 @@ const router = createBrowserRouter([
       {
         path: "account/connections",
         element: <AccountConnections />
+      },
+      {
+        path: "accounts/all",
+        element: <AllAccountsPage />
       },
       {
         path: "accounts/:accountId",

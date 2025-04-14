@@ -41,6 +41,3 @@ export const getExchangeRate = async (fromCurrency: string, toCurrency: string):
     throw error;
   }
 };
-
-// Re-export formatCurrency from formatters.ts
-export { formatCurrency } from './formatters'; 

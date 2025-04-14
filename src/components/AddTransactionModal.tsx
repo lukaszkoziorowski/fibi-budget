@@ -2,63 +2,92 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-import { addTransaction } from '@/store/budgetSlice';
+import { addTransaction } from '@/store/accountsSlice';
 import { RootState } from '@/store';
-import { currencies } from '@/utils/currencies';
-import { formatCurrency } from '@/utils/formatters';
 
 interface AddTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  accountId: string;
 }
 
-const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
+const AddTransactionModal = ({ isOpen, onClose, accountId }: AddTransactionModalProps) => {
   const dispatch = useDispatch();
   const categories = useSelector((state: RootState) => state.budget.categories);
-  const transactions = useSelector((state: RootState) => state.budget.transactions);
-  const { globalCurrency, currencyFormat } = useSelector((state: RootState) => state.budget);
+  const { currencyFormat } = useSelector((state: RootState) => state.budget);
   
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [type, setType] = useState<'income' | 'expense'>('expense');
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [type, setType] = useState<'debit' | 'credit'>('debit');
+  const [errors, setErrors] = useState<{
+    amount?: string;
+    description?: string;
+    categoryId?: string;
+  }>({});
 
-  // Get unique sellers/payees from historical transactions
-  const suggestions = Array.from(new Set(
-    transactions
-      .filter(t => t.type === type && t.description.toLowerCase().includes(description.toLowerCase()))
-      .map(t => t.description)
-  )).slice(0, 5);
+  // Reset form when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setAmount('');
+      setDescription('');
+      setCategoryId('');
+      setType('debit');
+      setErrors({});
+    }
+  }, [isOpen]);
+
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+    
+    if (!amount) {
+      newErrors.amount = 'Amount is required';
+    } else if (isNaN(Number(amount)) || Number(amount) <= 0) {
+      newErrors.amount = 'Amount must be a positive number';
+    }
+    
+    if (!description.trim()) {
+      newErrors.description = 'Description is required';
+    }
+    
+    if (type === 'debit' && !categoryId) {
+      newErrors.categoryId = 'Category is required for expenses';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!amount || !description) return;
-    if (type === 'expense' && !categoryId) return;
+    
+    if (!validateForm()) {
+      return;
+    }
 
-    const numericAmount = type === 'expense' ? -Number(amount) : Number(amount);
+    const numericAmount = Number(amount);
+    const transactionType = type === 'debit' ? 'debit' : 'credit';
 
     dispatch(
       addTransaction({
-        id: Date.now().toString(),
-        amount: numericAmount,
-        description,
-        categoryId: type === 'expense' ? categoryId : 'income',
+        accountId,
+        amount: transactionType === 'debit' ? -numericAmount : numericAmount,
+        description: description.trim(),
+        categoryId: transactionType === 'debit' ? categoryId : null,
         date: new Date().toISOString(),
-        type,
-        currency: globalCurrency,
+        type: transactionType,
+        currency: currencyFormat.currency,
+        isReconciled: false,
+        memo: null
       })
     );
 
-    setAmount('');
-    setDescription('');
-    setCategoryId('');
     onClose();
   };
 
   // Close suggestions when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => setShowSuggestions(false);
+    const handleClickOutside = () => {};
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
@@ -120,9 +149,9 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
                     <div className="grid grid-cols-2 gap-1 w-full">
                       <button
                         type="button"
-                        onClick={() => setType('expense')}
+                        onClick={() => setType('debit')}
                         className={`py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                          type === 'expense'
+                          type === 'debit'
                             ? 'bg-white shadow text-content-primary'
                             : 'text-content-secondary hover:text-content-primary'
                         }`}
@@ -131,9 +160,9 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
                       </button>
                       <button
                         type="button"
-                        onClick={() => setType('income')}
+                        onClick={() => setType('credit')}
                         className={`py-2 px-4 rounded-md text-sm font-medium transition-colors ${
-                          type === 'income'
+                          type === 'credit'
                             ? 'bg-white shadow text-content-primary'
                             : 'text-content-secondary hover:text-content-primary'
                         }`}
@@ -144,25 +173,35 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
                   </div>
 
                   {/* Amount input */}
-                  <div className="bg-gray-50 rounded-xl p-6 text-center">
-                    <div className="relative flex items-center justify-center">
-                      <input
-                        type="number"
-                        id="amount"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        className="bg-transparent text-6xl font-light text-center focus:outline-none text-content-primary w-48"
-                        placeholder="0.00"
-                        step="0.01"
-                        required
-                      />
+                  <div>
+                    <label htmlFor="amount" className="block text-sm font-medium text-gray-700">
+                      Amount
+                    </label>
+                    <div className="mt-1 relative">
+                      <div className="bg-gray-50 rounded-xl p-6 text-center">
+                        <div className="relative flex items-center justify-center">
+                          <input
+                            type="number"
+                            id="amount"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            className="bg-transparent text-6xl font-light text-center focus:outline-none text-content-primary w-48"
+                            placeholder="0.00"
+                            step="0.01"
+                            min="0.01"
+                          />
+                        </div>
+                      </div>
+                      {errors.amount && (
+                        <p className="mt-1 text-sm text-red-600">{errors.amount}</p>
+                      )}
                     </div>
                   </div>
 
                   {/* Description input */}
                   <div>
                     <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-                      {type === 'expense' ? 'Seller' : 'Payee'}
+                      {type === 'debit' ? 'Seller' : 'Payee'}
                     </label>
                     <div className="mt-1 relative">
                       <input
@@ -170,36 +209,18 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
                         id="description"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        onFocus={() => setShowSuggestions(true)}
-                        className="appearance-none block w-full pl-3 pr-10 py-2 text-sm border border-gray-200 rounded-md bg-gray-50 min-h-[32px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
-                        required
+                        className={`appearance-none block w-full pl-3 pr-10 py-2 text-sm border ${
+                          errors.description ? 'border-red-300' : 'border-gray-200'
+                        } rounded-md bg-gray-50 min-h-[32px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary`}
                       />
-                      {showSuggestions && suggestions.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white shadow-lg rounded-md border border-gray-200 overflow-hidden">
-                          {suggestions.map((suggestion, index) => (
-                            <button
-                              key={suggestion}
-                              type="button"
-                              onClick={() => {
-                                setDescription(suggestion);
-                                setShowSuggestions(false);
-                              }}
-                              className={`block w-full text-left px-4 py-2 text-sm transition-colors min-h-[32px] flex items-center
-                                ${index !== suggestions.length - 1 ? 'border-b border-gray-100' : ''}
-                                hover:bg-gray-50 hover:border-gray-300 focus:bg-gray-50 focus:outline-none
-                                ${description === suggestion ? 'bg-gray-50 text-primary border-primary' : 'text-gray-700 border-transparent'}
-                              `}
-                            >
-                              {suggestion}
-                            </button>
-                          ))}
-                        </div>
+                      {errors.description && (
+                        <p className="mt-1 text-sm text-red-600">{errors.description}</p>
                       )}
                     </div>
                   </div>
 
                   {/* Category selector */}
-                  {type === 'expense' && (
+                  {type === 'debit' && (
                     <div>
                       <label htmlFor="category" className="block text-sm font-medium text-gray-700">
                         Category
@@ -209,8 +230,9 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
                           id="category"
                           value={categoryId}
                           onChange={(e) => setCategoryId(e.target.value)}
-                          className="appearance-none block w-full pl-3 pr-10 py-2 text-sm border border-gray-200 rounded-md bg-gray-50 min-h-[32px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer"
-                          required
+                          className={`appearance-none block w-full pl-3 pr-10 py-2 text-sm border ${
+                            errors.categoryId ? 'border-red-300' : 'border-gray-200'
+                          } rounded-md bg-gray-50 min-h-[32px] focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer`}
                         >
                           <option value="" className="text-gray-500">Select a category</option>
                           {categories.map((category) => (
@@ -228,6 +250,9 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
                             <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
                           </svg>
                         </div>
+                        {errors.categoryId && (
+                          <p className="mt-1 text-sm text-red-600">{errors.categoryId}</p>
+                        )}
                       </div>
                     </div>
                   )}
@@ -236,7 +261,7 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
                   <div className="mt-5 sm:mt-6">
                     <button
                       type="submit"
-                      className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:text-sm"
+                      className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-[rgb(88,0,159)] text-base font-medium text-white hover:bg-[rgb(73,0,132)] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[rgb(88,0,159)] sm:text-sm"
                     >
                       Add Transaction
                     </button>
@@ -251,4 +276,4 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
   );
 };
 
-export default AddTransactionModal; 
+export default AddTransactionModal;

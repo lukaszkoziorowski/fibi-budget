@@ -1,23 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
 import { auth } from '../config/firebase';
-import { useSelector, useDispatch } from 'react-redux';
-import { setGlobalCurrency } from '@/store/budgetSlice';
+import { useSelector } from 'react-redux';
 import { RootState } from '@/store';
-import { currencies } from '@/utils/currencies';
 import {
   HomeIcon,
-  ArrowsRightLeftIcon,
   ChartBarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ChevronDownIcon,
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
-  Cog6ToothIcon,
-  BanknotesIcon
+  Cog6ToothIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../contexts/AuthContext';
 import AccountsDropdown from './AccountsDropdown';
@@ -30,7 +24,6 @@ interface NavigationProps {
 const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const { currentUser } = useAuth();
   const { budgetName } = useSelector((state: RootState) => state.budget);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -51,8 +44,6 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
 
   const navigationItems = [
     { path: '/', name: 'Home', icon: HomeIcon },
-    { path: '/transactions', name: 'Transactions', icon: ArrowsRightLeftIcon },
-    { path: '/report', name: 'Report', icon: ChartBarIcon },
   ];
 
   const getUserDisplayName = () => {
@@ -67,7 +58,7 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await auth.signOut();
       navigate('/login');
     } catch (error) {
       console.error('Failed to log out:', error);
@@ -140,6 +131,20 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
               <h3 className="text-sm font-medium text-gray-500 mb-2 px-3">Accounts</h3>
               <AccountsDropdown isCollapsed={false} />
             </div>
+
+            {/* Report Link for Mobile */}
+            <Link
+              to="/report"
+              className={`flex items-center w-full px-3 py-2 text-sm ${
+                isActive('/report')
+                  ? 'text-primary'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <ChartBarIcon className="w-5 h-5 mr-3" />
+              Report
+            </Link>
 
             <button
               onClick={() => navigate('/settings')}
@@ -216,6 +221,21 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
               <div className="mt-4 mb-2">
                 <AccountsDropdown isCollapsed={isCollapsed} />
               </div>
+
+              {/* Report Link for Desktop */}
+              <Link
+                to="/report"
+                className={`flex items-center justify-center md:justify-start h-10 px-2 text-sm rounded-md ${
+                  isActive('/report')
+                    ? 'bg-primary text-white hover:text-white'
+                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-700'
+                }`}
+              >
+                <div className="w-10 h-10 flex items-center justify-center">
+                  <ChartBarIcon className="w-5 h-5" />
+                </div>
+                {!isCollapsed && <span className="ml-2">Report</span>}
+              </Link>
             </div>
           </div>
         </div>
@@ -251,4 +271,4 @@ const Navigation = ({ isCollapsed, onCollapsedChange }: NavigationProps) => {
   );
 };
 
-export default Navigation; 
+export default Navigation;

@@ -130,3 +130,9 @@ describe('Account Slice', () => {
     expect(actual.accounts[0].balance).toBe(900); // 1000 - 100
   });
 }); 
+ 
+ 
+ 
+ 
+ 
+ 

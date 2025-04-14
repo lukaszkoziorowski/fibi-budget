@@ -40,3 +40,19 @@ export interface AccountState {
   error: string | null;
   activeAccountId: string | null;
 } 
+export interface AccountTransaction {
+  id: string;
+  accountId: string;
+  amount: number;
+  type: 'income' | 'expense';
+  description: string;
+  date: string;
+  categoryId: string;
+}
+
+export interface AccountBalance {
+  accountId: string;
+  balance: number;
+  currency: string;
+  lastUpdated: string;
+} 

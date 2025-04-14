@@ -16,3 +16,9 @@ export interface CategoryGroup {
   updatedAt: string;
   isCollapsed?: boolean;
 } 
+ 
+ 
+ 
+ 
+ 
+ 

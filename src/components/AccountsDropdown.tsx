@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { RootState } from '@/store';
 import { addAccount, setActiveAccount, updateAccount, deleteAccount } from '@/store/accountsSlice';
 import { BanknotesIcon, PlusIcon, ChevronDownIcon, XMarkIcon, PencilIcon } from '@heroicons/react/24/outline';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency } from '@/utils/currency';
 import type { Account } from '@/store/accountsSlice';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
@@ -108,43 +108,65 @@ const AccountsDropdown = ({ isCollapsed }: AccountsDropdownProps) => {
   const renderDropdownContent = () => {
     return (
       <>
-        {accounts.map(account => (
+        {/* All Accounts Option */}
+        <div className="group relative">
           <div
+            onClick={() => {
+              dispatch(setActiveAccount(null));
+              navigate('/accounts/all');
+            }}
+            className={`flex items-center w-full px-4 py-2 text-sm cursor-pointer ${
+              !activeAccountId
+                ? 'bg-purple-50 text-purple-700' 
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <span className="flex-1 text-left pl-7 truncate">All Accounts</span>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-100 my-1"></div>
+        
+        {accounts.map(account => (
+          <div 
             key={account.id}
             className="group relative"
           >
-            <button
-              onClick={() => {
-                dispatch(setActiveAccount(account.id));
+            <div
+                onClick={() => {
+                  dispatch(setActiveAccount(account.id));
                 navigate(`/accounts/${account.id}`);
-              }}
-              className={`flex items-center w-full px-4 py-2 text-sm ${
-                activeAccount?.id === account.id 
-                  ? 'bg-purple-50 text-purple-700' 
-                  : 'text-gray-700 hover:bg-gray-50'
-              }`}
-            >
+                }}
+              className={`flex items-center w-full px-4 py-2 text-sm cursor-pointer ${
+                  activeAccount?.id === account.id 
+                    ? 'bg-purple-50 text-purple-700' 
+                    : 'text-gray-700 hover:bg-gray-50'
+                }`}
+              >
               <button
-                onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleEditClick(e, account)}
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.stopPropagation();
+                  handleEditClick(e, account);
+                }}
                 className="opacity-0 group-hover:opacity-100 transition-opacity absolute left-2 p-1 hover:bg-gray-100 rounded"
               >
                 <PencilIcon className="w-4 h-4 text-gray-500" />
               </button>
               <span className="flex-1 text-left pl-7 truncate">{account.name}</span>
               <span className="flex-shrink-0 ml-2">{formatCurrency(account.balance, currencyFormat)}</span>
-            </button>
+            </div>
           </div>
-        ))}
-        
-        <div className="border-t border-gray-100 my-1"></div>
-        
-        <button
-          onClick={handleShowAddForm}
-          className="flex items-center w-full px-4 py-2 text-sm text-purple-600 hover:bg-gray-50"
-        >
-          <PlusIcon className="w-4 h-4 mr-2" />
-          Add Account
-        </button>
+            ))}
+            
+            <div className="border-t border-gray-100 my-1"></div>
+            
+            <button
+              onClick={handleShowAddForm}
+              className="flex items-center w-full px-4 py-2 text-sm text-purple-600 hover:bg-gray-50"
+            >
+              <PlusIcon className="w-4 h-4 mr-2" />
+              Add Account
+            </button>
       </>
     );
   };
@@ -161,7 +183,7 @@ const AccountsDropdown = ({ isCollapsed }: AccountsDropdownProps) => {
               <div className="w-10 h-10 flex items-center justify-center">
                 <BanknotesIcon className="w-5 h-5" />
               </div>
-            </button>
+                      </button>
             
             {isOpen && (
               <div 
@@ -174,36 +196,36 @@ const AccountsDropdown = ({ isCollapsed }: AccountsDropdownProps) => {
           </>
         ) : (
           <div ref={dropdownRef} className="w-full">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="flex items-center justify-between w-full px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
-            >
-              <div className="flex items-center">
-                <div className="w-10 h-10 flex items-center justify-center">
-                  <BanknotesIcon className="w-5 h-5" />
-                </div>
-                <span className="ml-2 font-medium">Accounts</span>
-              </div>
-              <ChevronDownIcon 
-                className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
-              />
-            </button>
-            
-            {isOpen && (
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between w-full px-2 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md"
+      >
+        <div className="flex items-center">
+          <div className="w-10 h-10 flex items-center justify-center">
+            <BanknotesIcon className="w-5 h-5" />
+          </div>
+          <span className="ml-2 font-medium">Accounts</span>
+        </div>
+        <ChevronDownIcon 
+          className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+        />
+      </button>
+      
+      {isOpen && (
               <div className="mt-1 w-full">
                 {renderDropdownContent()}
               </div>
             )}
-          </div>
-        )}
+        </div>
+      )}
       </div>
-
+      
       {/* Add Account Modal */}
-      <Transition appear show={showAddForm} as={Fragment}>
-        <Dialog 
-          as="div" 
+        <Transition appear show={showAddForm} as={Fragment}>
+          <Dialog 
+            as="div" 
           className="relative z-50"
-          onClose={() => setShowAddForm(false)}
+            onClose={() => setShowAddForm(false)}
         >
           <Transition.Child
             as={Fragment}
@@ -233,14 +255,14 @@ const AccountsDropdown = ({ isCollapsed }: AccountsDropdownProps) => {
                     <Dialog.Title className="text-base font-medium text-gray-900">
                       Add New Account
                     </Dialog.Title>
-                    <button
+                    <button 
                       onClick={() => setShowAddForm(false)}
                       className="text-gray-400 hover:text-gray-500"
                     >
                       <XMarkIcon className="w-5 h-5" />
                     </button>
                   </div>
-
+                  
                   <form onSubmit={handleAddSubmit} className="p-4 space-y-4">
                     <div>
                       <label className="block text-sm text-gray-700 mb-1">Name</label>
@@ -253,7 +275,7 @@ const AccountsDropdown = ({ isCollapsed }: AccountsDropdownProps) => {
                         autoFocus
                       />
                     </div>
-
+                    
                     <div>
                       <label className="block text-sm text-gray-700 mb-1">Type</label>
                       <select
@@ -268,7 +290,7 @@ const AccountsDropdown = ({ isCollapsed }: AccountsDropdownProps) => {
                         <option value="cash">Cash</option>
                       </select>
                     </div>
-
+                    
                     <div>
                       <label className="block text-sm text-gray-700 mb-1">Balance</label>
                       <input
@@ -279,7 +301,7 @@ const AccountsDropdown = ({ isCollapsed }: AccountsDropdownProps) => {
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
                       />
                     </div>
-
+                    
                     <div className="flex justify-end space-x-3 pt-4">
                       <button
                         type="button"
@@ -299,9 +321,9 @@ const AccountsDropdown = ({ isCollapsed }: AccountsDropdownProps) => {
                 </Dialog.Panel>
               </Transition.Child>
             </div>
-          </div>
-        </Dialog>
-      </Transition>
+            </div>
+          </Dialog>
+        </Transition>
 
       {/* Edit Account Modal */}
       <Transition appear show={showEditForm} as={Fragment}>
@@ -410,7 +432,7 @@ const AccountsDropdown = ({ isCollapsed }: AccountsDropdownProps) => {
                 </Dialog.Panel>
               </Transition.Child>
             </div>
-          </div>
+    </div>
         </Dialog>
       </Transition>
     </>

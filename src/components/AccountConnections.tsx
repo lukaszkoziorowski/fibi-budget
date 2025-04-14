@@ -1,11 +1,7 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { Link } from 'react-router-dom';
 import Footer from './Footer';
 
 const AccountConnections = () => {
-  const navigate = useNavigate();
-  
   return (
     <>
       <div className="min-h-screen bg-gray-100">

@@ -106,3 +106,9 @@ describe('AccountTransactions Component', () => {
     expect(container.firstChild).toBeNull();
   });
 }); 
+ 
+ 
+ 
+ 
+ 
+ 

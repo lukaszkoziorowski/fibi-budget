@@ -5,7 +5,8 @@ import { calculateCategoryActivity } from '@/utils/categoryUtils';
 import { useExchangeRates } from './useExchangeRates';
 
 export const useBudgetStats = () => {
-  const { categories, transactions, currentMonth } = useSelector((state: RootState) => state.budget);
+  const { categories, transactions: budgetTransactions, currentMonth } = useSelector((state: RootState) => state.budget);
+  const { transactions: accountTransactions } = useSelector((state: RootState) => state.accounts);
   const { currencyFormat } = useSelector((state: RootState) => state.budget);
   const { convertAmount } = useExchangeRates(currencyFormat.currency);
   const [stats, setStats] = useState({
@@ -31,20 +32,43 @@ export const useBudgetStats = () => {
     const calculateStats = async () => {
       try {
         const totalBudget = categories.reduce((sum, category) => sum + (category.budget || 0), 0);
-        const totalTransactions = transactions.length;
+        const totalTransactions = budgetTransactions.length + accountTransactions.length;
         
         let totalActivity = 0;
-        let totalExpenses = 0;
+        
+        // Calculate total expenses by summing up all category activities
         for (const category of categories) {
           const activity = await calculateCategoryActivity(
             category.id,
-            transactions,
+            budgetTransactions,
             currentMonth,
             convertAmount
           );
           totalActivity += activity || 0;
-          if (activity < 0) {
-            totalExpenses += Math.abs(activity);
+        }
+        
+        // Calculate total expenses from all transactions (both budget and account)
+        let totalExpenses = 0;
+        const startOfMonth = new Date(currentMonth);
+        const endOfMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 0);
+        
+        // Process budget transactions
+        for (const transaction of budgetTransactions) {
+          const transactionDate = new Date(transaction.date);
+          if (transactionDate >= startOfMonth && transactionDate <= endOfMonth) {
+            const amount = Math.abs(transaction.amount);
+            const convertedAmount = await convertAmount(amount, transaction.currency);
+            totalExpenses += convertedAmount;
+          }
+        }
+        
+        // Process account transactions
+        for (const transaction of accountTransactions) {
+          const transactionDate = new Date(transaction.date);
+          if (transactionDate >= startOfMonth && transactionDate <= endOfMonth) {
+            const amount = Math.abs(transaction.amount);
+            const convertedAmount = await convertAmount(amount, transaction.currency);
+            totalExpenses += convertedAmount;
           }
         }
 
@@ -82,7 +106,7 @@ export const useBudgetStats = () => {
           for (const category of groupCategories) {
             const activity = await calculateCategoryActivity(
               category.id,
-              transactions,
+              budgetTransactions,
               currentMonth,
               convertAmount
             );
@@ -126,7 +150,7 @@ export const useBudgetStats = () => {
     return () => {
       isMounted = false;
     };
-  }, [categories, transactions, currentMonth, convertAmount]);
+  }, [categories, budgetTransactions, accountTransactions, currentMonth, convertAmount]);
 
   return stats;
 }; 

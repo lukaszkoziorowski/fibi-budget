@@ -26,6 +26,9 @@ export interface Category {
   userId: string;
   createdAt: string;
   updatedAt: string;
+  target?: number;
+  upcomingTransaction?: number;
+  creditSpending?: number;
 }
 
 export interface Transaction {
