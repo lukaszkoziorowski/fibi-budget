@@ -5,8 +5,8 @@ import { formatCurrency } from '../../utils/formatters';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { createSelector } from '@reduxjs/toolkit';
 import AddTransactionModal from '../AddTransactionModal';
-import TransactionTable from './TransactionTable';
 import { deleteTransaction } from '../../store/accountsSlice';
+import TransactionList from '../TransactionList';
 
 interface AccountTransactionPageProps {
   accountId: string;
@@ -116,11 +116,8 @@ const AccountTransactionPage: React.FC<AccountTransactionPageProps> = ({ account
       </div>
 
       {/* Transactions Table */}
-      <TransactionTable
-        transactions={transactions}
-        currencyFormat={currencyFormat}
-        onEdit={handleEditTransaction}
-        onDelete={handleDeleteTransaction}
+      <TransactionList
+        accountId={accountId}
       />
 
       {/* Add Transaction Modal */}

@@ -156,7 +156,7 @@ export const {
   setActiveAccount,
   addTransaction,
   updateTransaction,
-  deleteTransaction,
+  deleteTransaction
 } = accountsSlice.actions;
 
 export default accountsSlice.reducer;

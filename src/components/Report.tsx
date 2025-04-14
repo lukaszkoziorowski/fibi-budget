@@ -8,36 +8,51 @@ import { calculateCategoryActivity } from '@/utils/categoryUtils';
 import { format } from 'date-fns';
 import { formatCurrency } from '@/utils/formatters';
 
+interface MonthlyData {
+  month: string;
+  expenses: number;
+}
+
 const Report = () => {
   const { transactions, categories } = useSelector((state: RootState) => state.budget);
   const { currencyFormat } = useCurrency();
-  const { convertAmount } = useExchangeRates(transactions, currencyFormat.currency);
+  const { convertAmount } = useExchangeRates(currencyFormat.currency);
 
   // Calculate monthly expenses data
-  const monthlyData = React.useMemo(() => {
+  const monthlyData = React.useMemo(async () => {
     const last6Months = Array.from({ length: 6 }, (_, i) => {
       const date = new Date();
       date.setMonth(date.getMonth() - i);
       return format(date, 'yyyy-MM');
     }).reverse();
 
-    return last6Months.map(month => {
-      const monthlyExpenses = categories.reduce((total, category) => {
-        const activity = calculateCategoryActivity(
-          category.id,
-          transactions,
-          month,
-          convertAmount
-        );
-        return total + activity;
-      }, 0);
+    const monthlyExpensesPromises = last6Months.map(async month => {
+      const activities = await Promise.all(
+        categories.map(category =>
+          calculateCategoryActivity(
+            category.id,
+            transactions,
+            month,
+            convertAmount
+          )
+        )
+      );
+      const monthlyExpenses = activities.reduce((total, activity) => total + activity, 0);
 
       return {
         month: format(new Date(month), 'MMM yyyy'),
         expenses: monthlyExpenses
       };
     });
+
+    return await Promise.all(monthlyExpensesPromises);
   }, [transactions, categories, convertAmount]);
+
+  const [data, setData] = React.useState<MonthlyData[]>([]);
+
+  React.useEffect(() => {
+    monthlyData.then(setData);
+  }, [monthlyData]);
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -50,7 +65,7 @@ const Report = () => {
           <div className="h-[400px]" data-testid="chart-container">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
-                data={monthlyData}
+                data={data}
                 margin={{
                   top: 20,
                   right: 30,
